@@ -1,7 +1,7 @@
 #!/bin/sh
 
 GO_VERSION=${GO_VERSION:-1.23.5} # go version
-ARCH=${GO_VERSION:-amd64} # go archicture
+ARCH=${ARCH:-amd64} # go archicture
 GO_SHA="cbcad4a6482107c7c7926df1608106c189417163428200ce357695cc7e01d091"
 echo "Running setup-env.sh..."
 
