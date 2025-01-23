@@ -33,8 +33,3 @@ RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/build /usr/local/bin
 ## Setup PATH
 ENV PATH=$PATH:/usr/local/go/bin:/usr/local/bin
 
-# Clean up unnecessary files to reduce image size
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN rm /setup-env.sh \
-    && rm /distrobox-shims.sh \
-    && rm /openwrt-builder.packages

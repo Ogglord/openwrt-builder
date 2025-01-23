@@ -22,7 +22,8 @@ grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y
 echo "Installing GO $GO_VERSION..."
 wget --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz
 sha256sum go${GO_VERSION}.linux-${ARCH}.tar.gz
-echo -n "$GO_SHA *go${VERSION}.linux-${ARCH}.tar.gz" | shasum -a 256 --check
+echo -n "$GO_SHA go${GO_VERSION}.linux-${ARCH}.tar.gz" | shasum -a 256 --check
+echo "Extracting go${GO_VERSION}.linux-${ARCH}.tar.gz to /usr/local"
 tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz
 rm -f go${GO_VERSION}.linux-${ARCH}.tar.gz
 
@@ -35,3 +36,10 @@ llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d
 
 # Symlink distrobox shims
 ./distrobox-shims.sh
+
+# Clean up unnecessary files to reduce image size
+apt-get clean
+rm -rf /var/lib/apt/lists/*
+rm -f /setup-env.sh
+rm -f /distrobox-shims.sh
+rm -f /openwrt-builder.packages
