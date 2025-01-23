@@ -30,11 +30,6 @@ RUN echo "alias help='cat /etc/motd'" >> /etc/bash.bashrc
 # Run the setup scripts
 RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/build /usr/local/bin/llvm-fix && /setup-env.sh
 
-## Install LLVM
-RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-RUN llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)" \
-    && echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/bash.bashrc
-
 ## Setup PATH
 ENV PATH=$PATH:/usr/local/go/bin:/usr/local/bin
 
