@@ -5,6 +5,9 @@ ARCH=${ARCH:-amd64} # go archicture
 GO_SHA="cbcad4a6482107c7c7926df1608106c189417163428200ce357695cc7e01d091"
 echo "Running setup-env.sh..."
 
+echo "Making apt-get run quiet, except for errors using /etc/apt/apt.conf.d/99quiet"
+echo "APT::Quiet \"true\";" > /etc/apt/apt.conf.d/99quiet
+
 cat <<EOF > /etc/apt/sources.list
 deb http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse
@@ -15,8 +18,8 @@ EOF
 rm -rf /etc/apt/sources.list.d/ubuntu.sources
 
 # Update the container and install packages
-apt-get update -y
-grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y 
+apt-get update -y -qq 
+grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y -qq
 
 ## Install GO
 echo "Installing GO $GO_VERSION..."
