@@ -16,20 +16,20 @@ LABEL com.github.containers.toolbox="true" \
 COPY ../scripts/setup-env.sh /
 COPY ../scripts/distrobox-shims.sh /
 COPY ../packages/openwrt-builder.packages /
-COPY ../scripts/build.sh /usr/local/bin/build
-COPY ../scripts/llvm-fix.sh /usr/local/bin/llvm-fix
+COPY ../scripts/build.sh /bin/build
+COPY ../scripts/llvm-fix.sh /bin/llvm-fix
 COPY ../scripts/motd /etc/motd
 
 # Ensure the MOTD is displayed on login
-RUN ln -sf /etc/motd /etc/issue && \
-    chmod 644 /etc/motd
+#RUN ln -sf /etc/motd /etc/issue && \
+#    chmod 644 /etc/motd
 
 # Add a help alias
 RUN echo "alias help='cat /etc/motd'" >> /etc/bash.bashrc
 
 # Run the setup scripts
-RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/build /usr/local/bin/llvm-fix && /setup-env.sh
+RUN chmod +x setup-env.sh distrobox-shims.sh /bin/build /bin/lvm-fix && /setup-env.sh
 
 ## Setup PATH
-ENV PATH=$PATH:/usr/local/go/bin:/usr/local/bin
+ENV PATH=$PATH:/usr/local/go/bin
 

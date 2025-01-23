@@ -8,10 +8,10 @@ We use the default boxkit image as an example to show you how to create a distro
 
 If you use distrobox:
 
-    distrobox create -i ghcr.io/ublue-os/boxkit -n boxkit
+    distrobox create -i ghcr.io/ogglord/openwrt-builder -n openwrt
     distrobox enter boxkit
     
 If you use toolbox:
 
-    toolbox create -i ghcr.io/ublue-os/boxkit -c boxkit
+    toolbox create -i ghcr.io/ogglord/openwrt-builder -c openwrt
     toolbox enter boxkit
