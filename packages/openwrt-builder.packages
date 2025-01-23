@@ -5,6 +5,7 @@ clang
 cmake
 curl
 file
+fish
 flex
 g++
 gawk
