@@ -8,7 +8,7 @@ deb http://archive.ubuntu.com/ubuntu noble-backports main restricted universe mu
 deb http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse
 EOF
 
-
+rm -rf /etc/apt/sources.list.d/ubuntu.sources
 
 # Update the container and install packages
 apt-get update -y
