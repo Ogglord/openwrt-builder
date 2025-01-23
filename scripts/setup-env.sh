@@ -14,5 +14,10 @@ rm -rf /etc/apt/sources.list.d/ubuntu.sources
 apt-get update -y
 grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y 
 
+## Install GO
+wget --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz
+tar -C /usr/local -xzf go${GO_VERSION}.linux-arm64.tar.gz \
+rm -f go${GO_VERSION}.linux-arm64.tar.gz
+
 # Symlink distrobox shims
 ./distrobox-shims.sh

@@ -4,6 +4,9 @@ ARG UBUNTU_VERSION=24.04
 
 FROM quay.io/toolbx/ubuntu-toolbox:${UBUNTU_VERSION}
 
+ENV GO_VERSION=${GO_VERSION}
+ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
+
 LABEL com.github.containers.toolbox="true" \
       usage="This image is meant to be used with the toolbox or distrobox command" \
       summary="This is an environment aimed at building OpenWRT images" \
@@ -26,11 +29,6 @@ RUN echo "alias help='cat /etc/motd'" >> /etc/bash.bashrc
 
 # Run the setup scripts
 RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/build /usr/local/bin/llvm-fix && /setup-env.sh
-
-## Install GO
-RUN wget --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz \
-    && tar -C /usr/local -xzf go${GO_VERSION}.linux-arm64.tar.gz \
-    && rm -f go${GO_VERSION}.linux-arm64.tar.gz
 
 ## Install LLVM
 RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"

@@ -20,7 +20,7 @@ lsb-release
 nano
 ncdu
 openssh-client
-python3-distutils
+python3-distutils-extra
 python3-setuptools
 quilt
 rsync
