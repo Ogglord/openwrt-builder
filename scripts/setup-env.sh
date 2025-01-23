@@ -1,7 +1,8 @@
 #!/bin/sh
 
-GO_VERSION=${GO_VERSION:-1.22.5}
-
+GO_VERSION=${GO_VERSION:-1.23.5} # go version
+ARCH=${GO_VERSION:-amd64} # go archicture
+GO_SHA="cbcad4a6482107c7c7926df1608106c189417163428200ce357695cc7e01d091"
 echo "Running setup-env.sh..."
 
 cat <<EOF > /etc/apt/sources.list
@@ -19,9 +20,12 @@ grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y
 
 ## Install GO
 echo "Installing GO $GO_VERSION..."
-wget --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz
-tar -C /usr/local -xzf go${GO_VERSION}.linux-arm64.tar.gz \
-rm -f go${GO_VERSION}.linux-arm64.tar.gz
+wget --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz
+sha256sum go${GO_VERSION}.linux-${ARCH}.tar.gz
+echo -n "$GO_SHA *go${VERSION}.linux-${ARCH}.tar.gz" | shasum -a 256 --check
+tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz
+rm -f go${GO_VERSION}.linux-${ARCH}.tar.gz
+
 
 ## Install LLVM
 echo "Installing latest llvm toolchain..."
