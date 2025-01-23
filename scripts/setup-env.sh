@@ -14,8 +14,5 @@ rm -rf /etc/apt/sources.list.d/ubuntu.sources
 apt-get update -y
 grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y 
 
-# Clean up unnecessary files to reduce image size
-apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # Symlink distrobox shims
 ./distrobox-shims.sh

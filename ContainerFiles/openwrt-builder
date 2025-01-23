@@ -26,7 +26,6 @@ RUN echo "alias help='cat /etc/motd'" >> /etc/bash.bashrc
 
 # Run the setup scripts
 RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/build /usr/local/bin/llvm-fix && /setup-env.sh
-RUN rm /setup-env.sh /distrobox-shims.sh /openwrt-builder.packages
 
 ## Install GO
 RUN wget --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz \
@@ -40,3 +39,9 @@ RUN llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cu
 
 ## Setup PATH
 ENV PATH=$PATH:/usr/local/go/bin:/usr/local/bin
+
+# Clean up unnecessary files to reduce image size
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN rm /setup-env.sh \
+    && rm /distrobox-shims.sh \
+    && rm /openwrt-builder.packages
