@@ -21,8 +21,8 @@ COPY ../scripts/llvm-fix /usr/local/bin/
 COPY ../scripts/motd /etc/motd
 
 # Ensure the MOTD is displayed on login
-#RUN ln -sf /etc/motd /etc/issue && \
-#    chmod 644 /etc/motd
+RUN ln -sf /etc/motd /etc/issue && \
+    chmod 644 /etc/motd
 
 # Add a help alias
 RUN echo "alias help='cat /etc/motd'" >> /etc/bash.bashrc

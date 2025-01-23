@@ -1,7 +1,7 @@
-Welcome!
+\e[1;32mWelcome!\e[0m
 --
-Use ´buildo´ to invoke the OpenWrt build helper
-Use ´llvm-fix´ to update the .config to use the LLVM toolchain
+Use \e[1;33m´buildo´\e[0m to invoke the OpenWrt build helper
+Use \e[1;33m´llvm-fix´\e[0m to update the .config to use the LLVM toolchain
 --
-Note: Both tools must be run from root of the source folder
+\e[1;34mNote: Both tools must be run from root of the source folder\e[0m
 ###################################################################
