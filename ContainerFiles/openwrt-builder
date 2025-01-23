@@ -1,0 +1,42 @@
+ARG DEBIAN_FRONTEND="noninteractive"
+ARG GO_VERSION=1.22.5
+ARG UBUNTU_VERSION=22.05
+
+FROM quay.io/toolbx/ubuntu-toolbox:${UBUNTU_VERSION}
+
+LABEL com.github.containers.toolbox="true" \
+      usage="This image is meant to be used with the toolbox or distrobox command" \
+      summary="This is an environment aimed at building OpenWRT images" \
+      maintainer="oag@proton.me"
+
+# Copy the setup scripts and package list
+COPY ../scripts/setup.sh /
+COPY ../scripts/distrobox-shims.sh /
+COPY ../packages/openwrt-builder.packages /
+COPY ../scripts/build.sh /usr/local/bin/build
+COPY ../scripts/llvm-fix.sh /usr/local/bin/llvm-fix
+COPY ../scripts/motd /etc/motd
+
+# Ensure the MOTD is displayed on login
+RUN ln -sf /etc/motd /etc/issue && \
+    chmod 644 /etc/motd
+
+# Add a help alias
+RUN echo "alias help='cat /etc/motd'" >> /etc/bash.bashrc
+
+# Run the setup scripts
+RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/build /usr/local/bin/llvm-fix && /setup-env.sh
+RUN rm /setup-env.sh /distrobox-shims.sh /openwrt-builder.packages
+
+## Install GO
+RUN wget --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz \
+    && tar -C /usr/local -xzf go${GO_VERSION}.linux-arm64.tar.gz \
+    && rm -f go${GO_VERSION}.linux-arm64.tar.gz
+
+## Install LLVM
+RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+RUN llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)" \
+    && echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/bash.bashrc
+
+## Setup PATH
+ENV PATH=$PATH:/usr/local/go/bin:/usr/local/bin
