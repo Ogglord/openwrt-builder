@@ -1,6 +1,6 @@
 Welcome!
 --
-Use ´build´ to invoke the OpenWrt build helper
+Use ´buildo´ to invoke the OpenWrt build helper
 Use ´llvm-fix´ to update the .config to use the LLVM toolchain
 --
 Note: Both tools must be run from root of the source folder
