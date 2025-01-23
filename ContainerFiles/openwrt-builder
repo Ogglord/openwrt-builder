@@ -10,7 +10,7 @@ LABEL com.github.containers.toolbox="true" \
       maintainer="oag@proton.me"
 
 # Copy the setup scripts and package list
-COPY ../scripts/setup.sh /
+COPY ../scripts/setup-env.sh /
 COPY ../scripts/distrobox-shims.sh /
 COPY ../packages/openwrt-builder.packages /
 COPY ../scripts/build.sh /usr/local/bin/build
