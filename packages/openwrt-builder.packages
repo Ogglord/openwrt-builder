@@ -2,7 +2,6 @@
 bison
 build-essential
 ca-certificates
-clang
 file
 fish
 flex
