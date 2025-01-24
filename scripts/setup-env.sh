@@ -57,7 +57,7 @@ wget --quiet --ca-directory=/etc/ssl/certs/ https://apt.llvm.org/llvm.sh
 chmod +x llvm.sh
 sudo ./llvm.sh "$LLVM_VERSION"
 llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)" \
-    && echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/bash.bashrc
+    && echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/profile
 
 # Phase 5: Setup Distrobox Shims
 CURRENT_PHASE="5 - Distrobox Shims"

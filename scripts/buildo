@@ -191,6 +191,7 @@ download_apps(){
 }
 
 build() {
+
     case $MODE in
         debug)
             # Build in debug mode            
@@ -203,8 +204,8 @@ build() {
             log "info" "Starting build process in ${MODE^^} mode..."
             log "info" "Running make defconfig just in case..."
             make defconfig
-            log "info" "Time to build! Running 'make -j14 V=s'..."        
-            make -j14 V=s 2>&1 | tee "$LOG_DIR/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
+            log "info" "Time to build! Running 'make -j $(($(nproc)+1)) V=s'..."        
+            make -j $(($(nproc)+1)) V=s 2>&1 | tee "$LOG_DIR/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
             ;;
         *)
             log "error" "Unable to build, unknown mode: $MODE."
