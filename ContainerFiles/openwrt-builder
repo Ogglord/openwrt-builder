@@ -18,11 +18,13 @@ COPY ../scripts/distrobox-shims.sh /
 COPY ../packages/openwrt-builder.packages /
 COPY ../scripts/buildo /usr/local/bin/
 COPY ../scripts/llvm-fix /usr/local/bin/
+# bash motd
 COPY ../scripts/motd /etc/motd
+# fish config
+COPY ../scripts/config.fish /etc/fish/config.fish
+COPY ../scripts/motd.fish /etc/fish/motd.fish
 
-# Ensure the MOTD is displayed on login
-#RUN ln -sf /etc/motd /etc/issue && \
-#    chmod 644 /etc/motd
+RUN chmod 644 /etc/motd
 
 # Run the setup scripts
 RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/buildo /usr/local/bin/llvm-fix && /setup-env.sh
@@ -32,5 +34,5 @@ ENV PATH=$PATH:/usr/local/go/bin
 
 # Add a help alias and motd if using fish shell
 RUN echo "alias help='cat /etc/motd'" >> /etc/profile
-RUN echo "cat /etc/motd" >> /etc/fish/config.fish
+
 
