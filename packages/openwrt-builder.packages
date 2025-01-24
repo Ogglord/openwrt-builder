@@ -1,3 +1,4 @@
+
 bison
 build-essential
 ca-certificates
@@ -11,14 +12,16 @@ gawk
 gcc-multilib
 gettext
 git
+gnupg
 libncurses5-dev
 libssl-dev
+lsb-release 
 python3-setuptools
 rsync
+software-properties-common
 swig
 unzip
 wget
+zip
 zlib1g-dev
 zstd
-zip
-
