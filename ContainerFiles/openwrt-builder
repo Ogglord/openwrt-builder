@@ -19,8 +19,6 @@ COPY ../packages/openwrt-builder.packages /
 COPY ../scripts/buildo /usr/local/bin/
 COPY ../scripts/llvm-fix /usr/local/bin/
 
-RUN chmod 644 /etc/motd
-
 # Run the setup scripts
 RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/buildo /usr/local/bin/llvm-fix && /setup-env.sh
 
@@ -31,6 +29,7 @@ ENV PATH=$PATH:/usr/local/go/bin
 RUN echo "alias help='cat /etc/motd'" >> /etc/profile
 # bash motd
 COPY ../shell/motd /etc/motd
+RUN chmod 644 /etc/motd
 # fish config
 COPY ../shell/config.fish /etc/fish/config.fish
 COPY ../shell/motd.fish /etc/fish/motd.fish
