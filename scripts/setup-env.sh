@@ -38,15 +38,16 @@ grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y -qq
 
 # Phase 3: Install GO
 CURRENT_PHASE="3 - GO Installation"
-echo "Phase ${CURRENT_PHASE}"
-echo "Installing GO $GO_VERSION..."
-wget --quiet --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz
-echo "Posting checksums - only for occular inspection:"
-sha256sum go${GO_VERSION}.linux-${ARCH}.tar.gz
-echo $GO_SHA
-echo "Extracting go${GO_VERSION}.linux-${ARCH}.tar.gz to /usr/local"
-tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz
-rm -f go${GO_VERSION}.linux-${ARCH}.tar.gz
+echo "SKIPPED"
+# echo "Phase ${CURRENT_PHASE}"
+# echo "Installing GO $GO_VERSION..."
+# wget --quiet --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz
+# echo "Posting checksums - only for occular inspection:"
+# sha256sum go${GO_VERSION}.linux-${ARCH}.tar.gz
+# echo $GO_SHA
+# echo "Extracting go${GO_VERSION}.linux-${ARCH}.tar.gz to /usr/local"
+# tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz
+# rm -f go${GO_VERSION}.linux-${ARCH}.tar.gz
 
 
 # Phase 4: Install LLVM
