@@ -34,7 +34,7 @@ If you use toolbox:
 
 ### 3. Build
 
-Do not copy this, run it line by line yourself
+Do not copy this, run it line by line yourself from INSIDE the distrobox/toolbox environment(!)
 
 ```bash
 # I recommend using fish inside the distrobox
