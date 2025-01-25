@@ -59,7 +59,7 @@ echo "Phase ${CURRENT_PHASE}"
 echo "Installing latest llvm toolchain..."
 wget --quiet --ca-directory=/etc/ssl/certs/ https://apt.llvm.org/llvm.sh
 chmod +x llvm.sh
-sudo ./llvm.sh "$LLVM_VERSION"
+sudo ./llvm.sh "$LLVM_VERSION" > /dev/null
 touch /.llvm_installed
 llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)" \
     && echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/profile
@@ -79,7 +79,7 @@ echo "export TMUX_TMPDIR=/var/tmp" >> /etc/profile
 # Phase 7: Cleanup
 CURRENT_PHASE="7 - Cleanup"
 echo "Phase ${CURRENT_PHASE}"
-apt-get clean
+apt-get clean > /dev/null
 rm -rf /var/lib/apt/lists/*
 rm -f /setup-env.sh
 rm -f /distrobox-shims.sh
