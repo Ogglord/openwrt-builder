@@ -35,6 +35,7 @@ CURRENT_PHASE="2 - Package Installation"
 echo "Phase ${CURRENT_PHASE}"
 apt-get update -y -qq 
 grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y -qq
+touch /.packages_installed
 
 # Phase 3: Install GO
 CURRENT_PHASE="3 - GO Installation"
@@ -47,7 +48,9 @@ wget --quiet --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.li
 #echo $GO_SHA
 echo "Extracting go${GO_VERSION}.linux-${ARCH}.tar.gz to /usr/local"
 tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz
+touch /.go_installed
 rm -f go${GO_VERSION}.linux-${ARCH}.tar.gz
+echo "export PATH=\"$PATH:/usr/local/go/bin\""
 
 
 # Phase 4: Install LLVM
@@ -57,6 +60,7 @@ echo "Installing latest llvm toolchain..."
 wget --quiet --ca-directory=/etc/ssl/certs/ https://apt.llvm.org/llvm.sh
 chmod +x llvm.sh
 sudo ./llvm.sh "$LLVM_VERSION"
+touch /.llvm_installed
 llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)" \
     && echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/profile
 echo "LLVM_HOST_PATH added to /etc/profile"
@@ -65,6 +69,7 @@ echo "LLVM_HOST_PATH added to /etc/profile"
 CURRENT_PHASE="5 - Distrobox Shims"
 echo "Phase ${CURRENT_PHASE}"
 ./distrobox-shims.sh
+touch /.shims_installed
 
 # Phase 6: Allow for multiple tmux (https://github.com/89luca89/distrobox/issues/824)
 CURRENT_PHASE="6 - Tmux workaround"
