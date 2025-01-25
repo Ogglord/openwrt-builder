@@ -60,6 +60,7 @@ $: buildo full
 # or do the steps yourselves
 $: ./scripts/feeds update -a
 $: ./scripts/feeds install -a
+$: llvm_fix # run this to inject the path to LLVM toolchain, important, this is done by buildo command
 $: make -j$(nproc) defconfig download clean world
 ```
 
