@@ -1,8 +1,0 @@
-\033[1;32mWelcome!\033[0m
---
-Use \033[1;33m´buildo´\033[0m to invoke the OpenWrt build helper
-Use \033[1;33m´llvm-fix´\033[0m to update the .config to use the LLVM toolchain
---
-\033[1;34mNote: Both tools must be run from root of the source folder\033[0m
-###################################################################
-Please use fish shell 'chsh -s $(which fish)'

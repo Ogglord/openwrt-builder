@@ -16,7 +16,9 @@ if status is-interactive
 
     function fish_greeting
         set_color --bold green
-        echo "Welcome!"
+        echo ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"
+        echo "  Welcome to openwrt-builder  "
+        echo "''''''''''''''''''''''''''''''"
         set_color normal
         echo "--"
         set_color --bold yellow
@@ -28,9 +30,10 @@ if status is-interactive
         set_color normal
         echo " to update the .config to use the LLVM toolchain"
         echo "--"
-        set_color --bold blue
-        echo "Note: Both tools must be run from root of the source folder"
         set_color normal
-        echo "###################################################################"
+        echo "Note: Both tools must be run from root of the source folder"
+        set_color --bold green
+        echo "################################"
+        set_color normal
     end
 end
