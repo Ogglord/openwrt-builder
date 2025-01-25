@@ -5,7 +5,7 @@ It's a docker container/OCI image built to be used with either distrobox or tool
 
 [Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
 
-For this purpose I have made this container (ghcr.io/ogglord/openwrt-builder) that contains Ubuntu with all the build dependencies as well as an helper script 'buildo' that does very little except saves me from typing a lot of repetetive commands and injects the LLVM config options automatically.
+For this purpose I have made this container (ghcr.io/ogglord/openwrt-builder) that contains Ubuntu with all the build dependencies as well as an helper script ```buildo``` that does very little except saves me from typing a lot of repetetive commands and injects the LLVM config options automatically.
 
 ## How to build OpenWrt ?
 
