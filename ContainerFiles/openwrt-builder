@@ -22,9 +22,6 @@ COPY ../scripts/llvm-fix /usr/local/bin/
 # Run the setup scripts
 RUN chmod +x setup-env.sh distrobox-shims.sh /usr/local/bin/buildo /usr/local/bin/llvm-fix && /setup-env.sh
 
-## Setup PATH
-ENV PATH=$PATH:/usr/local/go/bin
-
 # Add a help alias
 RUN echo "alias help='cat /etc/motd'" >> /etc/profile
 # bash motd
