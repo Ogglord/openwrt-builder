@@ -50,7 +50,7 @@ echo "Extracting go${GO_VERSION}.linux-${ARCH}.tar.gz to /usr/local"
 tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz
 touch /.go_installed
 rm -f go${GO_VERSION}.linux-${ARCH}.tar.gz
-echo "export PATH=\"$PATH:/usr/local/go/bin\""
+echo "export PATH=\"$PATH:/usr/local/go/bin\"" >> /etc/profile
 
 
 # Phase 4: Install LLVM
