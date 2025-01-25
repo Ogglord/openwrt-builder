@@ -16,7 +16,9 @@ if status is-interactive
 
     function fish_prompt
             ## modify the default 
+            set -g __fish_git_prompt_showupstream auto
             set current_dir (basename (pwd))
-            echo "📦[$USER@$CONTAINER_ID $current_dir] (fish_git_prompt)> "
+            set gitprompt (fish_git_prompt)
+            echo "📦[$USER@$CONTAINER_ID $current_dir] $gitprompt> "
     end
 end
