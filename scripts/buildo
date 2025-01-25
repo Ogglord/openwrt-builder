@@ -172,40 +172,60 @@ error_exit() {
 trap 'error_exit $LINENO' ERR
 
 update_install_feeds() {
+    local REMOVE_APPS="audit busybox kexec-tools lldpd policycoreutils"
+    local INSTALL_APPS="busybox kexec-tools lldpd policycoreutils"
+
     log "info" "Step 1. Updating and installing all feeds..."
     ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log"
+
     ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log"
+
     log "info" "Reinstalling apps that fail on the first attempt..."
-    REMOVE_APPS="audit busybox kexec-tools lldpd policycoreutils"
-    INSTALL_APPS="busybox kexec-tools lldpd policycoreutils"
     ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log"
-    ./scripts/feeds install $INSTALL_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log"
+    #./scripts/feeds install $INSTALL_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log"
+
     ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log"
-    log "info" "Step 1. COMPLETED"
+    log "info" "Step 1. COMPLETED. Logs at $LOG_DIR/feeds.log"
 }
 
 download_apps(){
     # Run make download
-    log "info" "Running 'make -j1 V=s download'. Logging to download.log"
+    log "info" "Step 2. Running 'make -j1 V=s download'. Logging to $LOG_DIR/download.log"
     make -j1 V=s download | tee "$LOG_DIR/download.log"
+    log "info" "Step 2. COMPLETED. Logs at $LOG_DIR/download.log"
+}   
+
+run_llvm_fix() {
+    log "info" "Validating LLVM config options using 'llvm-fix'"
+    if [ -x "/usr/local/bin/llvm-fix" ]; then
+        /usr/local/bin/llvm-fix 2>&1 | tee "$LOG_DIR/llvm_fix.log"
+    else
+        log "error" "LLVM fix script not found at /usr/local/bin/llvm-fix"
+        exit 1
+    fi
 }
 
 build() {
+    # Run LLVM fix before building
+    run_llvm_fix
+
+    log "info" "Running make defconfig just in case..."
+    make defconfig
 
     case $MODE in
         debug)
             # Build in debug mode            
-            log "info" "Starting build process in DEBUG mode..."
-            log "info" "Running make with debug output..."
-            make -j1 V=s 2>&1 | tee "$LOG_DIR/build_debug.log"
+            log "info" "STEP 3. Starting actual build process (world) in DEBUG mode..."
+            log "info" "'make -j1 V=s world'..." 
+            make -j1 V=s world 2>&1 | tee "$LOG_DIR/build_debug.log"
+            log "info" "Step 3. COMPLETED. Logs at $LOG_DIR/build_debug.log"
             ;;
         full|normal)
             # Exit immediately on error for non-debug modes        
-            log "info" "Starting build process in ${MODE^^} mode..."
-            log "info" "Running make defconfig just in case..."
-            make defconfig
-            log "info" "Time to build! Running 'make -j $(($(nproc)+1)) V=s'..."        
-            make -j $(($(nproc)+1)) V=s 2>&1 | tee "$LOG_DIR/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
+            log "info" "STEP 3. Starting actual build process (world)"
+            log "info" "'make -j $(($(nproc)+1)) V=s world'..."        
+            make -j $(($(nproc)+1)) V=s world 2>&1 | tee "$LOG_DIR/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
+            log "info" "Step 3. COMPLETED. Logs at $LOG_DIR/build.log"
             ;;
         *)
             log "error" "Unable to build, unknown mode: $MODE."
