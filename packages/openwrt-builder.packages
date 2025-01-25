@@ -1,4 +1,4 @@
-
+## build dependencies, for OpenWrt and for installing llvm using https://apt.llvm.org/llvm.sh later
 bison
 build-essential
 ca-certificates
