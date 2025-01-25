@@ -5,7 +5,7 @@ It's a docker container built to be used with distrobox or toolbox and ultimatel
 
 [Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
 
-For this purpose I have a custom OCI container that contains the build dependencies as well as an helper script 'buildo'
+For this purpose I have a custom OCI container that contains the build dependencies as well as an helper script 'buildo' that performs saves me from typing a lot of repetetive commands.
 
 ## How to build OpenWrt ?
 
