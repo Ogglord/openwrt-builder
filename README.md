@@ -1,7 +1,7 @@
 # openwrt-builder
 
-## What is OpenWrt-Builder ?
-It's a docker container built to be used with distrobox or toolbox and ultimately compile OpenWrt.
+## What is ppenWrt-builder ?
+It's a docker container/OCI image built to be used with either distrobox or toolbox and allow you to compile OpenWrt from source with little effort.
 
 [Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
 
