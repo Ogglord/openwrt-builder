@@ -1,5 +1,7 @@
 # openwrt-builder
 
+[![build-boxkit](https://github.com/Ogglord/openwrt-builder/actions/workflows/build-boxkit.yml/badge.svg)](https://github.com/Ogglord/openwrt-builder/actions/workflows/build-boxkit.yml)
+
 ## What is openWrt-builder ?
 It's a docker container/OCI image built to be used with either distrobox or toolbox and allow you to compile OpenWrt from source with little effort.
 
