@@ -4,11 +4,11 @@
 [![release-please](https://github.com/Ogglord/openwrt-builder/actions/workflows/release-please.yml/badge.svg?event=push)](https://github.com/Ogglord/openwrt-builder/actions/workflows/release-please.yml)
 
 ## What is openwrt-builder ?
-It's a docker container/OCI image built to be used with either distrobox or toolbox and allow you to compile OpenWrt from source with little effort.
+It's a docker container/OCI image built to be used with either distrobox or toolbox which allows you to compile OpenWrt from source with little effort.
 
 [Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
 
-For this purpose I have made this container (ghcr.io/ogglord/openwrt-builder) that contains Ubuntu with all the build dependencies as well as an helper script ```buildo``` that does very little except saves me from typing a lot of repetetive commands and injects the LLVM config options automatically.
+The image ([ghcr.io/ogglord/openwrt-builder](https://ghcr.io/ogglord/openwrt-builder) contains Ubuntu with the usual build dependencies + llvm as well as an helper script ```buildo``` that does very little except saves me from typing a lot of repetetive commands and injects the necessary LLVM lines to .config automatically.
 
 ## Getting started
 
