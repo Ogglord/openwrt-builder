@@ -55,3 +55,9 @@ $: ./scripts/feeds update -a
 $: ./scripts/feeds install -a
 $: make -j$(nproc) defconfig download clean world
 ```
+
+Further reading / inspiration
+
+ - https://openwrt.org/docs/guide-developer/toolchain/use-buildsystem
+ - https://github.com/Fail-Safe/openwrt-pesa1234-build
+
