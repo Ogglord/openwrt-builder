@@ -59,6 +59,7 @@ chmod +x llvm.sh
 sudo ./llvm.sh "$LLVM_VERSION"
 llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)" \
     && echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/profile
+echo "LLVM_HOST_PATH added to /etc/profile"
 
 # Phase 5: Setup Distrobox Shims
 CURRENT_PHASE="5 - Distrobox Shims"
