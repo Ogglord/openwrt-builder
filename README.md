@@ -7,7 +7,7 @@ It's a docker container/OCI image built to be used with either distrobox or tool
 
 For this purpose I have made this container (ghcr.io/ogglord/openwrt-builder) that contains Ubuntu with all the build dependencies as well as an helper script ```buildo``` that does very little except saves me from typing a lot of repetetive commands and injects the LLVM config options automatically.
 
-## How to build OpenWrt ?
+## Getting started
 
 ### 1. Install the either distrobox or toolbox. 
 
