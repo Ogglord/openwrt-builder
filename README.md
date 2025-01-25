@@ -8,7 +8,7 @@ It's a docker container/OCI image built to be used with either distrobox or tool
 
 [Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
 
-The image ([ghcr.io/ogglord/openwrt-builder](https://ghcr.io/ogglord/openwrt-builder) contains Ubuntu with the usual build dependencies + llvm as well as an helper script ```buildo``` that does very little except saves me from typing a lot of repetetive commands and injects the necessary LLVM lines to .config automatically.
+The image ([ghcr.io/ogglord/openwrt-builder](https://ghcr.io/ogglord/openwrt-builder)) contains Ubuntu with the usual build dependencies + llvm as well as an helper script ```buildo``` that does very little except saves me from typing a lot of repetetive commands and injects the necessary LLVM lines to .config automatically.
 
 ## Getting started
 
