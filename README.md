@@ -3,7 +3,7 @@
 [![build-boxkit](https://github.com/Ogglord/openwrt-builder/actions/workflows/build-boxkit.yml/badge.svg)](https://github.com/Ogglord/openwrt-builder/actions/workflows/build-boxkit.yml)
 [![release-please](https://github.com/Ogglord/openwrt-builder/actions/workflows/release-please.yml/badge.svg?event=push)](https://github.com/Ogglord/openwrt-builder/actions/workflows/release-please.yml)
 
-## What is openWrt-builder ?
+## What is openwrt-builder ?
 It's a docker container/OCI image built to be used with either distrobox or toolbox and allow you to compile OpenWrt from source with little effort.
 
 [Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
