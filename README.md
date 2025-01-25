@@ -64,7 +64,7 @@ $: make -j$(nproc) defconfig download clean world
 ```
 
 ## Make it easier
-Copy the distrobox.ini to any folder, this allows you to type ```distrobox assemble create```to create the environment, and ```distrobox enter```to enter the environment when you are in that folder.
+Copy the distrobox.ini to any folder, this allows you to type ```distrobox assemble create```to create the distrobox environment, and ```distrobox enter```to enter the environment when you are in that folder.
 ```bash
 wget https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/main/distrobox.ini
 ```
