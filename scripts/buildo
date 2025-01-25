@@ -150,17 +150,6 @@ usage() {
     exit 1
 }
 
-# Check if mode argument is provided
-if [ $# -ne 1 ]; then
-    usage    
-fi
-
-# Pre-check OpenWrt source directory
-check_openwrt_source
-
-# Check dependencies
-check_dependencies
-
 # Function to handle errors
 error_exit() {
     log "error" "Error occurred on line $1. Exiting script."
@@ -238,11 +227,29 @@ build() {
 DRY_RUN=false
 MODE=""
 
+# First argument must be the mode
+if [ $# -lt 1 ]; then
+    log "error" "No build mode specified"
+    usage
+    exit 1
+fi
+
+# Get the mode from first argument
+case "$1" in
+    full|normal|debug)
+        MODE="$1"
+        shift
+        ;;
+    *)
+        log "error" "Invalid mode: $1"
+        usage
+        exit 1
+        ;;
+esac
+
+# Process remaining arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        full|normal|debug)
-            MODE="$1"
-            ;;
         --dry-run)
             DRY_RUN=true
             ;;
@@ -255,12 +262,11 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-# Validate mode is set
-if [ -z "$MODE" ]; then
-    log "error" "No build mode specified"
-    usage
-    exit 1
-fi
+# Pre-check OpenWrt source directory
+check_openwrt_source
+
+# Check dependencies
+check_dependencies
 
 # Check tool versions
 check_tool_versions
