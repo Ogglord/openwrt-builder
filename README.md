@@ -63,6 +63,27 @@ $: ./scripts/feeds install -a
 $: make -j$(nproc) defconfig download clean world
 ```
 
+## Make it easier
+Copy the distrobox.ini to any folder, this allows you to type ```distrobox assemble create```to create the environment, and ```distrobox enter```to enter the environment when you are in that folder.
+```bash
+wget https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/main/distrobox.ini
+```
+
+The folder contains this, you can add your own packages if you like
+
+```ini
+[openwrt]
+image=ghcr.io/ogglord/openwrt-builder
+init=false
+nvidia=false
+pull=true
+root=false
+replace=true
+start_now=true
+#additional_packages="ncdu bat"
+```
+
+
 ## Further reading / inspiration
 
  - https://openwrt.org/docs/guide-developer/toolchain/use-buildsystem
