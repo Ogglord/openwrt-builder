@@ -18,6 +18,7 @@ python3-setuptools
 rsync
 software-properties-common
 swig
+tmux
 unzip
 wget
 zip

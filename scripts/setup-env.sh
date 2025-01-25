@@ -66,8 +66,13 @@ CURRENT_PHASE="5 - Distrobox Shims"
 echo "Phase ${CURRENT_PHASE}"
 ./distrobox-shims.sh
 
-# Phase 6: Cleanup
-CURRENT_PHASE="6 - Cleanup"
+# Phase 6: Allow for multiple tmux (https://github.com/89luca89/distrobox/issues/824)
+CURRENT_PHASE="6 - Tmux workaround"
+echo "Phase ${CURRENT_PHASE}"
+echo "export TMUX_TMPDIR=/var/tmp" >> /etc/profile
+
+# Phase 7: Cleanup
+CURRENT_PHASE="7 - Cleanup"
 echo "Phase ${CURRENT_PHASE}"
 apt-get clean
 rm -rf /var/lib/apt/lists/*
