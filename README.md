@@ -12,9 +12,13 @@ For this purpose I have made this container (ghcr.io/ogglord/openwrt-builder) th
 
 ## Getting started
 
+Requirements:
+ 1. Docker or podman installed, I recommend Docker.
+ 2. A compatible host OS, see [here](https://github.com/89luca89/distrobox/blob/main/docs/compatibility.md#host-distros) for a full list. TLDR; Any linux distro, WSL on Windows, MacOs might work but it's not officially supported (try ```brew install distrobox```)
+
 ### 1. Install the either distrobox or toolbox. 
 
-Make sure you have docker or podman installed.
+
 
 ```bash
 curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo sh
