@@ -190,8 +190,8 @@ update_install_feeds() {
 
 download_apps(){
     # Run make download
-    log "info" "Step 2. Running 'make -j1 V=s download'. Logging to $LOG_DIR/download.log"
-    make -j1 V=s download | tee "$LOG_DIR/download.log"
+    log "info" "Step 2. Running 'make -j1 download'. Logging to $LOG_DIR/download.log"
+    make -j1 download | tee "$LOG_DIR/download.log"
     log "info" "Step 2. COMPLETED. Logs at $LOG_DIR/download.log"
 }   
 
