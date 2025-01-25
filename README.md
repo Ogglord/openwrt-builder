@@ -19,6 +19,9 @@ curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo
 or read [here](https://github.com/89luca89/distrobox/?tab=readme-ov-file#installation) for more installation options.
 
 ### 2. Create and enter the container
+
+This will automatically pull the image and create the container (i.e. ```docker pull ghcr.io/ogglord/openwrt-builder```), it takes a few minutes the first time. It mounts your home directory to the containers home directory by default.
+
 If you use distrobox:
 
     distrobox create -i ghcr.io/ogglord/openwrt-builder -n openwrt
