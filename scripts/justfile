@@ -10,7 +10,7 @@ export LOG_DIR := "./build_logs"
 export TIMESTAMP := `date +"%Y%m%d_%H%M%S"`
 
 # Build settings
-jobs := env_var_or_default("BUILD_JOBS", num_cpus() + 1)
+jobs := env_var_or_default("BUILD_JOBS", num_cpus())
 make_flags := "V=s world"
 remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
 
@@ -25,7 +25,7 @@ remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
     echo "  just llvm-fix   - Configure LLVM toolchain"
     echo ""
     echo "Environment:"
-    echo "  BUILD_JOBS      - Override number of build jobs (default: $(nproc)+1)"
+    echo "  BUILD_JOBS      - Override number of build jobs (default: $(nproc))"
     echo "  LLVM_HOST_PATH  - Required for LLVM configuration"
 
 # Initialize build environment
