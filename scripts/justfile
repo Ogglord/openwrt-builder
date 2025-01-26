@@ -8,7 +8,7 @@ set unstable
 
 # Build settings
 jobs := env_var_or_default("BUILD_JOBS", num_cpus())
-make_flags := "V=s world"
+make_flags := "world"
 remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
 
 # Show available recipes
@@ -56,7 +56,7 @@ build: llvm-fix
 
 debug: llvm-fix
     make defconfig
-    make -j1 {{make_flags}}
+    make -j1 V=s
 
 
 [script("/usr/local/bin/llvm-fix")]
