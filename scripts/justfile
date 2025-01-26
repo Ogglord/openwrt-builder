@@ -16,17 +16,21 @@ remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
 
 # Show available recipes
 @default:
-    echo "Available recipes:"
-    echo "  fullbuild  - Full build: update feeds, download apps, and build"
-    echo "  build      - Normal build: build only"
-    echo "  debug      - Debug build: single thread verbose build"
-    echo "  llvm-fix   - Configure LLVM toolchain settings only"
+    echo "OpenWrt Builder v0.3"
+    echo "-------------------"
+    echo "Commands:"
+    echo "  just fullbuild  - Complete build with feeds update"
+    echo "  just build      - Standard build"
+    echo "  just debug      - Debug build (single thread)"
+    echo "  just llvm-fix   - Configure LLVM toolchain"
+    echo ""
+    echo "Environment:"
+    echo "  BUILD_JOBS      - Override number of build jobs (default: $(nproc)+1)"
+    echo "  LLVM_HOST_PATH  - Required for LLVM configuration"
 
 # Initialize build environment
 _init:
     mkdir -p "${LOG_DIR}"
-    echo "OpenWrt Builder v0.3"
-    echo "-------------------"
 
 # Log a message with level and content
 _log level message:
@@ -51,7 +55,7 @@ _log level message:
 # Cleanup old log files
 _cleanup:
     #!/usr/bin/env bash
-    just _log info "Cleaning up old log files..."
+    just _log info "Rotating logs"
     find "${LOG_DIR}" -type f -name "*_error_*.log" | sort | head -n -5 | xargs -r rm
     find "${LOG_DIR}" -type f -name "*_warning_*.log" | sort | head -n -5 | xargs -r rm
     find "${LOG_DIR}" -type f -name "*_info_*.log" | sort | head -n -5 | xargs -r rm
@@ -197,9 +201,4 @@ debug: _init _check_openwrt_source
 # Configure LLVM toolchain settings in OpenWrt
 [no-exit-message]
 llvm-fix: _init _check_openwrt_source
-    #!/usr/bin/env bash
-    if [ -z "${LLVM_HOST_PATH:-}" ]; then
-        echo "[ERROR] LLVM_HOST_PATH environment variable must be set"
-        exit 1
-    fi
     just _run_llvm_fix
