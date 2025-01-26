@@ -16,14 +16,15 @@ remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
     echo "OpenWrt Builder v0.3"
     echo "-------------------"
     echo "Commands:"
-    echo "  just fullbuild  - Complete build with feeds update"
-    echo "  just build      - Standard build"
-    echo "  just debug      - Debug build (single thread)"
-    echo "  just llvm-fix   - Configure LLVM toolchain"
+    echo "  just feeds       - update feeds only"   
+    echo "  just build-all   - update feeds and build"
+    echo "  just build       - make world"
+    echo "  just build-debug - make world verbose (single thread)"
+    echo "  just llvm-fix    - configure .config for LLVM toolchain"
     echo ""
     echo "Environment:"
-    echo "  BUILD_JOBS      - Override number of build jobs (default: $(nproc))"
-    echo "  LLVM_HOST_PATH  - Required for LLVM configuration"
+    echo "  BUILD_JOBS       - Override number of build jobs (default: $(nproc))"
+    echo "  LLVM_HOST_PATH   - Required for LLVM configuration"
 
 # Directory checks - are we in the openwrt source directory?
 dir_toolchain := if path_exists("toolchain") == "true" { "true" } else { "false" }
@@ -34,7 +35,7 @@ openwrt_pwd_check :=  if dir_toolchain == "true" { "OK" } else { error("You must
 
 
 # Update and install feeds
-_update_feeds:
+update_feeds:
     ./scripts/feeds update -a
     ./scripts/feeds install -a
     ./scripts/feeds uninstall {{remove_apps}}
@@ -42,21 +43,18 @@ _update_feeds:
 
 # Build recipes
 fullbuild: llvm-fix
-    just _update_feeds
+    just update_feeds
     make download
-    just _configure_llvm
     make defconfig
     make -j {{jobs}} {{make_flags}}
 
 
 build: llvm-fix
-    just _configure_llvm
     make defconfig
     make -j {{jobs}} {{make_flags}}
 
 
 debug: llvm-fix
-    just _configure_llvm
     make defconfig
     make -j1 {{make_flags}}
 
