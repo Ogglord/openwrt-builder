@@ -61,5 +61,5 @@ debug: llvm-fix
     make -j1 {{make_flags}}
 
 
-[script("/usr/bin/local/llvm-fix")]
+[script("/usr/local/bin/llvm-fix")]
 llvm-fix:
