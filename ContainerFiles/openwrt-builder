@@ -20,8 +20,6 @@ COPY ../scripts/distrobox-shims.sh /
 COPY ../packages/openwrt-builder.packages /
 COPY ../scripts/buildo /usr/local/bin/
 COPY ../scripts/llvm-fix /usr/local/bin/
-COPY ../shell/config.fish /etc/fish/
-COPY ../shell/bass/ /etc/fish/functions/
 COPY ../scripts/justfile /etc/just/justfile
 
 # Set permissions and run setup
@@ -29,3 +27,7 @@ RUN chmod +x /setup-env.sh /distrobox-shims.sh /usr/local/bin/buildo /usr/local/
     chmod 644 /etc/fish/functions/__bass.py /etc/fish/functions/bass.fish && \
     echo "alias just='just --justfile /etc/just/justfile --working-directory .'" >> /etc/profile && \
     GO_VERSION=${GO_VERSION} DEBIAN_FRONTEND=${DEBIAN_FRONTEND} ARCH=${ARCH} /setup-env.sh
+
+# Copy fish config must be done after apt install
+COPY ../shell/config.fish /etc/fish/
+COPY ../shell/bass/ /etc/fish/functions/
