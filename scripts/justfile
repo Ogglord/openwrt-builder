@@ -6,7 +6,11 @@ set shell := ["bash", "-uc"]
 
 # Default recipe to show help
 default:
-    @just --list
+    @echo "Available recipes:"
+    @echo "  fullbuild  - Full build: update feeds, download apps, and build"
+    @echo "  build      - Normal build: build only"
+    @echo "  debug      - Debug build: single thread verbose build"
+    @echo "  llvm-fix   - Configure LLVM toolchain settings"
 
 # Environment variables and constants
 export LOG_DIR := "./build_logs"
