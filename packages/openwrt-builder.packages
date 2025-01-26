@@ -11,6 +11,7 @@ gcc-multilib
 gettext
 git
 gnupg
+just
 libncurses5-dev
 libssl-dev
 lsb-release 

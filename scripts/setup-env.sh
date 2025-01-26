@@ -76,8 +76,8 @@ CURRENT_PHASE="6 - Tmux workaround"
 echo "Phase ${CURRENT_PHASE}"
 echo "export TMUX_TMPDIR=/var/tmp" >> /etc/profile
 
-# Phase 7: Cleanup
-CURRENT_PHASE="7 - Cleanup"
+# Phase: Cleanup
+CURRENT_PHASE="Cleanup"
 echo "Phase ${CURRENT_PHASE}"
 apt-get clean > /dev/null
 rm -rf /var/lib/apt/lists/*

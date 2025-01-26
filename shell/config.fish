@@ -6,6 +6,8 @@ if status is-interactive
         bass source /etc/profile
     end
 
+    alias just='just --justfile /etc/just/justfile --working-directory .'
+
     function fish_prompt
             ## modify the default 
             set -g __fish_git_prompt_showupstream auto

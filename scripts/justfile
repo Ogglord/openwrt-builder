@@ -1,0 +1,152 @@
+# OpenWrt Build Helper Justfile
+# Version: 0.2
+# Author: github.com/Ogglord
+
+set shell := ["bash", "-uc"]
+
+# Default recipe to show help
+default:
+    @just --list
+
+# Environment variables and constants
+export LOG_DIR := "./logs"
+export TIMESTAMP := `date +"%Y%m%d_%H%M%S"`
+
+# Color definitions
+RED := "\033[0;31m"
+GREEN := "\033[0;32m"
+YELLOW := "\033[1;33m"
+NC := "\033[0m"
+
+# Required apps for feeds
+remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
+install_apps := "busybox kexec-tools lldpd policycoreutils"
+
+# Create log directory and print header
+_init:
+    mkdir -p "${LOG_DIR}"
+    echo -e "${GREEN}OpenWrt Build Helper Justfile version 0.2${NC} - github.com/Ogglord"
+    echo "-"
+
+# Log a message with level and content
+_log level message:
+    #!/usr/bin/env bash
+    log_file="${LOG_DIR}/${level}_${TIMESTAMP}.log"
+    case "{{level}}" in
+        "error")
+            echo -e "${RED}[ERROR]${NC} {{message}}" >&2
+            ;;
+        "warning")
+            echo -e "${YELLOW}[WARNING]${NC} {{message}}" >&2
+            ;;
+        "info")
+            echo -e "${GREEN}[INFO]${NC} {{message}}"
+            ;;
+        *)
+            echo "{{message}}"
+            ;;
+    esac
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] {{level}}: {{message}}" >> "$log_file"
+
+# Cleanup old log files
+_cleanup:
+    #!/usr/bin/env bash
+    just _log info "Cleaning up old log files..."
+    find "${LOG_DIR}" -type f -name "*_error_*.log" | sort | head -n -5 | xargs -r rm
+    find "${LOG_DIR}" -type f -name "*_warning_*.log" | sort | head -n -5 | xargs -r rm
+    find "${LOG_DIR}" -type f -name "*_info_*.log" | sort | head -n -5 | xargs -r rm
+
+# Check if current directory is an OpenWrt source folder
+_check_openwrt_source:
+    #!/usr/bin/env bash
+    required_dirs=("scripts" "package" "target" "toolchain")
+    required_files=("Makefile" "scripts/feeds")
+    missing_dirs=()
+    missing_files=()
+    
+    for dir in "${required_dirs[@]}"; do
+        [ ! -d "$dir" ] && missing_dirs+=("$dir")
+    done
+    
+    for file in "${required_files[@]}"; do
+        [ ! -f "$file" ] && missing_files+=("$file")
+    done
+    
+    if [ ${#missing_dirs[@]} -gt 0 ] || [ ${#missing_files[@]} -gt 0 ]; then
+        just _log error "Invalid OpenWrt source directory"
+        [ ${#missing_dirs[@]} -gt 0 ] && just _log error "Missing directories: ${missing_dirs[*]}"
+        [ ${#missing_files[@]} -gt 0 ] && just _log error "Missing files: ${missing_files[*]}"
+        just _log error "Make sure you're running this from the OpenWrt root directory"
+        exit 1
+    fi
+    
+    just _log info "OpenWrt source directory validated successfully"
+
+# Update and install feeds
+_update_install_feeds:
+    #!/usr/bin/env bash
+    just _log info "Step 1. Updating and installing all feeds..."
+    ./scripts/feeds update -a 2>&1 | tee "${LOG_DIR}/feeds.log"
+    ./scripts/feeds install -a 2>&1 | tee -a "${LOG_DIR}/feeds.log"
+    
+    just _log info "Reinstalling apps that fail on the first attempt..."
+    ./scripts/feeds uninstall ${remove_apps} 2>&1 | tee -a "${LOG_DIR}/feeds.log"
+    ./scripts/feeds install -a 2>&1 | tee -a "${LOG_DIR}/feeds.log"
+    
+    just _log info "Step 1. COMPLETED. Logs at ${LOG_DIR}/feeds.log"
+
+# Download required applications
+_download_apps:
+    #!/usr/bin/env bash
+    just _log info "Step 2. Running 'make -j1 download'. Logging to ${LOG_DIR}/download.log"
+    make -j1 download | tee "${LOG_DIR}/download.log"
+    just _log info "Step 2. COMPLETED. Logs at ${LOG_DIR}/download.log"
+
+# Run LLVM fix script
+_run_llvm_fix:
+    #!/usr/bin/env bash
+    just _log info "Validating LLVM config options using 'llvm-fix'"
+    if [ -x "/usr/local/bin/llvm-fix" ]; then
+        /usr/local/bin/llvm-fix 2>&1 | tee "${LOG_DIR}/llvm_fix.log"
+    else
+        just _log error "LLVM fix script not found at /usr/local/bin/llvm-fix"
+        exit 1
+    fi
+
+# Full build: update feeds, download apps, and build
+fullbuild:
+    just _init
+    just _check_openwrt_source
+    just _update_install_feeds
+    just _download_apps
+    just _run_llvm_fix
+    just _log info "Running make defconfig..."
+    make defconfig
+    just _log info "Starting build process..."
+    make -j $(($(nproc)+1)) V=s world 2>&1 | tee "${LOG_DIR}/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
+    just _cleanup
+    just _log info "Build process completed! Check logs in ${LOG_DIR} for full output."
+
+# Normal build: build only
+build:
+    just _init
+    just _check_openwrt_source
+    just _run_llvm_fix
+    just _log info "Running make defconfig..."
+    make defconfig
+    just _log info "Starting build process..."
+    make -j $(($(nproc)+1)) V=s world 2>&1 | tee "${LOG_DIR}/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
+    just _cleanup
+    just _log info "Build process completed! Check logs in ${LOG_DIR} for full output."
+
+# Debug build: single thread verbose build
+debug:
+    just _init
+    just _check_openwrt_source
+    just _run_llvm_fix
+    just _log info "Running make defconfig..."
+    make defconfig
+    just _log info "Starting build process in debug mode..."
+    make -j1 V=s world 2>&1 | tee "${LOG_DIR}/build_debug.log"
+    just _cleanup
+    just _log info "Build process completed! Check logs in ${LOG_DIR} for full output."
