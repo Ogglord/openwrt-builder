@@ -1,30 +1,32 @@
 # OpenWrt Build Helper Justfile
-# Version: 0.2
+# Version: 0.3
 # Author: github.com/Ogglord
 
 set shell := ["bash", "-uc"]
-
-# Default recipe to show help
-default:
-    @echo "Available recipes:"
-    @echo "  fullbuild  - Full build: update feeds, download apps, and build"
-    @echo "  build      - Normal build: build only"
-    @echo "  debug      - Debug build: single thread verbose build"
-    @echo "  llvm-fix   - Configure LLVM toolchain settings"
+set dotenv-load := true
 
 # Environment variables and constants
 export LOG_DIR := "./build_logs"
 export TIMESTAMP := `date +"%Y%m%d_%H%M%S"`
 
-# Required apps for feeds
+# Build settings
+jobs := env_var_or_default("BUILD_JOBS", num_cpus() + 1)
+make_flags := "V=s world"
 remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
-install_apps := "busybox kexec-tools lldpd policycoreutils"
 
-# Create log directory and print header
+# Show available recipes
+@default:
+    echo "Available recipes:"
+    echo "  fullbuild  - Full build: update feeds, download apps, and build"
+    echo "  build      - Normal build: build only"
+    echo "  debug      - Debug build: single thread verbose build"
+    echo "  llvm-fix   - Configure LLVM toolchain settings only"
+
+# Initialize build environment
 _init:
     mkdir -p "${LOG_DIR}"
-    echo "OpenWrt Build Helper Justfile version 0.2 - github.com/Ogglord"
-    echo "-"
+    echo "OpenWrt Builder v0.3"
+    echo "-------------------"
 
 # Log a message with level and content
 _log level message:
@@ -83,30 +85,30 @@ _check_openwrt_source:
 # Update and install feeds
 _update_install_feeds:
     #!/usr/bin/env bash
-    just _log info "Step 1. Updating and installing all feeds..."
+    just _log info "Updating feeds"
     ./scripts/feeds update -a 2>&1 | tee "${LOG_DIR}/feeds.log"
     ./scripts/feeds install -a 2>&1 | tee -a "${LOG_DIR}/feeds.log"
     
-    just _log info "Reinstalling apps that fail on the first attempt..."
+    just _log info "Reinstalling problematic packages"
     ./scripts/feeds uninstall ${remove_apps} 2>&1 | tee -a "${LOG_DIR}/feeds.log"
     ./scripts/feeds install -a 2>&1 | tee -a "${LOG_DIR}/feeds.log"
     
-    just _log info "Step 1. COMPLETED. Logs at ${LOG_DIR}/feeds.log"
+    just _log info "Feeds updated successfully"
 
 # Download required applications
 _download_apps:
     #!/usr/bin/env bash
-    just _log info "Step 2. Running 'make -j1 download'. Logging to ${LOG_DIR}/download.log"
+    just _log info "Downloading packages"
     make -j1 download | tee "${LOG_DIR}/download.log"
-    just _log info "Step 2. COMPLETED. Logs at ${LOG_DIR}/download.log"
+    just _log info "Downloads completed"
 
-# Check for broken symlinks in staging directory
+# Validate staging directory symlinks
 _check_staging_symlinks:
     #!/usr/bin/env bash
     staging_dir="./staging_dir/host/bin"
     
     if [ ! -d "$staging_dir" ]; then
-        just _log warning "Staging directory does not exist: $staging_dir"
+        just _log warning "No staging directory found"
         exit 0
     fi
     
@@ -114,94 +116,90 @@ _check_staging_symlinks:
     broken_links=$(find . -xtype l -print || true)
     
     if [ -n "$broken_links" ]; then
-        just _log error "Broken symlinks detected:"
+        just _log error "Found broken symlinks:"
         echo "$broken_links" | while read -r link; do
-            just _log error "Broken symlink: $link"
+            just _log error "$link"
         done
         exit 1
     else
-        just _log info "No broken symlinks found in staging directory"
+        just _log info "Staging symlinks validated"
     fi
 
-# Configure LLVM toolchain settings
+# Configure LLVM toolchain
 _configure_llvm_toolchain:
     #!/usr/bin/env bash
     if [ -z "${LLVM_HOST_PATH:-}" ]; then
-        just _log error "LLVM_HOST_PATH is not set or is empty"
+        just _log error "LLVM_HOST_PATH not set"
         exit 1
     fi
     
     config_file=".config"
     if [ ! -e "$config_file" ]; then
-        just _log warning "Configuration file missing: $config_file"
+        just _log warning "No .config file found"
         exit 0
     fi
     
-    # Unset BPF toolchain build flag
+    # Configure BPF toolchain
     if grep -q "CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y" "$config_file"; then
-        just _log info "Unsetting CONFIG_BPF_TOOLCHAIN_BUILD_LLVM"
+        just _log info "Disabling BPF toolchain build"
         sed -i -e 's|CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y|# CONFIG_BPF_TOOLCHAIN_BUILD_LLVM is not set|' "$config_file"
     fi
     
-    # Handle LLVM host path configuration
+    # Set LLVM host path
     if grep -q "CONFIG_BPF_TOOLCHAIN_HOST_PATH" "$config_file"; then
-        just _log info "Updating existing LLVM host path"
+        just _log info "Updating LLVM path"
         sed -i -e 's|CONFIG_BPF_TOOLCHAIN_HOST_PATH=.*|CONFIG_BPF_TOOLCHAIN_HOST_PATH="'"$LLVM_HOST_PATH"'"|' "$config_file"
     else
-        just _log info "Adding LLVM host path configuration"
+        just _log info "Setting LLVM path"
         echo 'CONFIG_BPF_TOOLCHAIN_HOST_PATH="'"$LLVM_HOST_PATH"'"' >> "$config_file"
         echo 'CONFIG_BPF_TOOLCHAIN_HOST=y' >> "$config_file"
         echo 'CONFIG_USE_LLVM_HOST=y' >> "$config_file"
     fi
 
-# Run LLVM fix
+# Apply LLVM configuration
 _run_llvm_fix:
     #!/usr/bin/env bash
-    just _log info "Applying automatic adjustments for OpenWrt environment..."
+    just _log info "Configuring LLVM toolchain"
     just _check_staging_symlinks
     just _configure_llvm_toolchain
-    just _log info "OpenWrt fixes applied successfully"
+    just _log info "LLVM configuration complete"
 
-# Full build: update feeds, download apps, and build
-fullbuild:
-    just _init
-    just _check_openwrt_source
+# Execute build steps
+_build_steps job_count log_file:
+    #!/usr/bin/env bash
+    just _log info "Running defconfig"
+    make defconfig
+    just _log info "Building OpenWrt"
+    make -j {{job_count}} {{make_flags}} 2>&1 | tee "${LOG_DIR}/{{log_file}}" | grep -i -E "^make.*(error|[12345]...Entering dir)"
+    just _cleanup
+    just _log info "Build complete - Logs: ${LOG_DIR}/{{log_file}}"
+
+# Build the OpenWrt image with all steps
+[no-exit-message]
+fullbuild: _init _check_openwrt_source
     just _update_install_feeds
     just _download_apps
     just _run_llvm_fix
-    just _log info "Running make defconfig..."
-    make defconfig
-    just _log info "Starting build process..."
-    make -j $(($(nproc)+1)) V=s world 2>&1 | tee "${LOG_DIR}/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
-    just _cleanup
-    just _log info "Build process completed! Check logs in ${LOG_DIR} for full output."
+    just _build_steps {{jobs}} "build.log"
 
-# Normal build: build only
-build:
-    just _init
-    just _check_openwrt_source
+# Build the OpenWrt image without updating feeds
+[no-exit-message]
+build: _init _check_openwrt_source
     just _run_llvm_fix
-    just _log info "Running make defconfig..."
-    make defconfig
-    just _log info "Starting build process..."
-    make -j $(($(nproc)+1)) V=s world 2>&1 | tee "${LOG_DIR}/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
-    just _cleanup
-    just _log info "Build process completed! Check logs in ${LOG_DIR} for full output."
+    just _build_steps {{jobs}} "build.log"
 
-# Debug build: single thread verbose build
-debug:
-    just _init
-    just _check_openwrt_source
+# Build with single thread and verbose output
+[no-exit-message]
+debug: _init _check_openwrt_source
     just _run_llvm_fix
-    just _log info "Running make defconfig..."
-    make defconfig
-    just _log info "Starting build process in debug mode..."
-    make -j1 V=s world 2>&1 | tee "${LOG_DIR}/build_debug.log"
-    just _cleanup
-    just _log info "Build process completed! Check logs in ${LOG_DIR} for full output."
+    just _build_steps "1" "build_debug.log"
 
-# LLVM fix: configure LLVM toolchain settings
-llvm-fix:
-    just _init
-    just _check_openwrt_source
+# Configure LLVM toolchain settings in OpenWrt
+[no-exit-message]
+llvm-fix: _init _check_openwrt_source
+    #!/usr/bin/env bash
+    if [ -z "${LLVM_HOST_PATH:-}" ]; then
+        echo "[ERROR] LLVM_HOST_PATH environment variable must be set"
+        exit 1
+    fi
     just _run_llvm_fix
