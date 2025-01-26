@@ -45,24 +45,6 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $level: $message" >> "$log_file"
 }
 
-# Version check for required tools
-check_tool_versions() {
-    local min_make_ver="4.0"
-    local min_git_ver="2.0"
-    
-    # Check Make version
-    make_ver=$(make --version | head -n1 | awk '{print $3}')
-    if [ "$(printf '%s\n' "$min_make_ver" "$make_ver" | sort -V | head -n1)" != "$min_make_ver" ]; then
-        log "warning" "Make version $make_ver may be lower than recommended $min_make_ver"
-    fi
-    
-    # Check Git version
-    git_ver=$(git --version | awk '{print $3}')
-    if [ "$(printf '%s\n' "$min_git_ver" "$git_ver" | sort -V | head -n1)" != "$min_git_ver" ]; then
-        log "warning" "Git version $git_ver may be lower than recommended $min_git_ver"
-    fi
-}
-
 # Cleanup function to manage log files
 cleanup() {
     log "info" "Cleaning up old log files..."
@@ -267,9 +249,6 @@ check_openwrt_source
 
 # Check dependencies
 check_dependencies
-
-# Check tool versions
-check_tool_versions
 
 # Dry run mode
 if [ "$DRY_RUN" = true ]; then
