@@ -2,12 +2,9 @@
 # Version: 0.3
 # Author: github.com/Ogglord
 
-set shell := ["bash", "-uc"]
+set shell := ["bash", "-c"]
 set dotenv-load := true
-
-# Environment variables and constants
-export LOG_DIR := "./build_logs"
-export TIMESTAMP := `date +"%Y%m%d_%H%M%S"`
+set unstable
 
 # Build settings
 jobs := env_var_or_default("BUILD_JOBS", num_cpus())
@@ -28,177 +25,41 @@ remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
     echo "  BUILD_JOBS      - Override number of build jobs (default: $(nproc))"
     echo "  LLVM_HOST_PATH  - Required for LLVM configuration"
 
-# Initialize build environment
-_init:
-    mkdir -p "${LOG_DIR}"
+# Directory checks - are we in the openwrt source directory?
+dir_toolchain := if path_exists("toolchain") == "true" { "true" } else { "false" }
+file_makefile := if path_exists("Makefile")  == "true" { "true" } else { "false" }
+file_feeds := if path_exists("scripts/feeds")  == "true" { "true" } else { "false" }
+dir_ok := if dir_toolchain == "true" { if file_makefile == "true" { if file_feeds == "true" { "true" } else { "false"} } else { "false" } } else { "false"}
+openwrt_pwd_check :=  if dir_toolchain == "true" { "OK" } else { error("You must run just from the openwrt source root") }
 
-# Log a message with level and content
-_log level message:
-    #!/usr/bin/env bash
-    log_file="${LOG_DIR}/${level}_${TIMESTAMP}.log"
-    case "{{level}}" in
-        "error")
-            echo "[ERROR] {{message}}" >&2
-            ;;
-        "warning")
-            echo "[WARNING] {{message}}" >&2
-            ;;
-        "info")
-            echo "[INFO] {{message}}"
-            ;;
-        *)
-            echo "{{message}}"
-            ;;
-    esac
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] {{level}}: {{message}}" >> "$log_file"
-
-# Cleanup old log files
-_cleanup:
-    #!/usr/bin/env bash
-    just _log info "Rotating logs"
-    find "${LOG_DIR}" -type f -name "*_error_*.log" | sort | head -n -5 | xargs -r rm
-    find "${LOG_DIR}" -type f -name "*_warning_*.log" | sort | head -n -5 | xargs -r rm
-    find "${LOG_DIR}" -type f -name "*_info_*.log" | sort | head -n -5 | xargs -r rm
-
-# Check if current directory is an OpenWrt source folder
-_check_openwrt_source:
-    #!/usr/bin/env bash
-    required_dirs=("scripts" "package" "target" "toolchain")
-    required_files=("Makefile" "scripts/feeds")
-    missing_dirs=()
-    missing_files=()
-    
-    for dir in "${required_dirs[@]}"; do
-        [ ! -d "$dir" ] && missing_dirs+=("$dir")
-    done
-    
-    for file in "${required_files[@]}"; do
-        [ ! -f "$file" ] && missing_files+=("$file")
-    done
-    
-    if [ ${#missing_dirs[@]} -gt 0 ] || [ ${#missing_files[@]} -gt 0 ]; then
-        just _log error "Invalid OpenWrt source directory"
-        [ ${#missing_dirs[@]} -gt 0 ] && just _log error "Missing directories: ${missing_dirs[*]}"
-        [ ${#missing_files[@]} -gt 0 ] && just _log error "Missing files: ${missing_files[*]}"
-        just _log error "Make sure you're running this from the OpenWrt root directory"
-        exit 1
-    fi
-    
-    just _log info "OpenWrt source directory validated successfully"
 
 # Update and install feeds
-_update_install_feeds:
-    #!/usr/bin/env bash
-    just _log info "Updating feeds"
-    ./scripts/feeds update -a 2>&1 | tee "${LOG_DIR}/feeds.log"
-    ./scripts/feeds install -a 2>&1 | tee -a "${LOG_DIR}/feeds.log"
-    
-    just _log info "Reinstalling problematic packages"
-    ./scripts/feeds uninstall ${remove_apps} 2>&1 | tee -a "${LOG_DIR}/feeds.log"
-    ./scripts/feeds install -a 2>&1 | tee -a "${LOG_DIR}/feeds.log"
-    
-    just _log info "Feeds updated successfully"
+_update_feeds:
+    ./scripts/feeds update -a
+    ./scripts/feeds install -a
+    ./scripts/feeds uninstall {{remove_apps}}
+    ./scripts/feeds install -a
 
-# Download required applications
-_download_apps:
-    #!/usr/bin/env bash
-    just _log info "Downloading packages"
-    make -j1 download | tee "${LOG_DIR}/download.log"
-    just _log info "Downloads completed"
-
-# Validate staging directory symlinks
-_check_staging_symlinks:
-    #!/usr/bin/env bash
-    staging_dir="./staging_dir/host/bin"
-    
-    if [ ! -d "$staging_dir" ]; then
-        just _log warning "No staging directory found"
-        exit 0
-    fi
-    
-    cd "$staging_dir"
-    broken_links=$(find . -xtype l -print || true)
-    
-    if [ -n "$broken_links" ]; then
-        just _log error "Found broken symlinks:"
-        echo "$broken_links" | while read -r link; do
-            just _log error "$link"
-        done
-        exit 1
-    else
-        just _log info "Staging symlinks validated"
-    fi
-
-# Configure LLVM toolchain
-_configure_llvm_toolchain:
-    #!/usr/bin/env bash
-    if [ -z "${LLVM_HOST_PATH:-}" ]; then
-        just _log error "LLVM_HOST_PATH not set"
-        exit 1
-    fi
-    
-    config_file=".config"
-    if [ ! -e "$config_file" ]; then
-        just _log warning "No .config file found"
-        exit 0
-    fi
-    
-    # Configure BPF toolchain
-    if grep -q "CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y" "$config_file"; then
-        just _log info "Disabling BPF toolchain build"
-        sed -i -e 's|CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y|# CONFIG_BPF_TOOLCHAIN_BUILD_LLVM is not set|' "$config_file"
-    fi
-    
-    # Set LLVM host path
-    if grep -q "CONFIG_BPF_TOOLCHAIN_HOST_PATH" "$config_file"; then
-        just _log info "Updating LLVM path"
-        sed -i -e 's|CONFIG_BPF_TOOLCHAIN_HOST_PATH=.*|CONFIG_BPF_TOOLCHAIN_HOST_PATH="'"$LLVM_HOST_PATH"'"|' "$config_file"
-    else
-        just _log info "Setting LLVM path"
-        echo 'CONFIG_BPF_TOOLCHAIN_HOST_PATH="'"$LLVM_HOST_PATH"'"' >> "$config_file"
-        echo 'CONFIG_BPF_TOOLCHAIN_HOST=y' >> "$config_file"
-        echo 'CONFIG_USE_LLVM_HOST=y' >> "$config_file"
-    fi
-
-# Apply LLVM configuration
-_run_llvm_fix:
-    #!/usr/bin/env bash
-    just _log info "Configuring LLVM toolchain"
-    just _check_staging_symlinks
-    just _configure_llvm_toolchain
-    just _log info "LLVM configuration complete"
-
-# Execute build steps
-_build_steps job_count log_file:
-    #!/usr/bin/env bash
-    just _log info "Running defconfig"
+# Build recipes
+fullbuild: llvm-fix
+    just _update_feeds
+    make download
+    just _configure_llvm
     make defconfig
-    just _log info "Building OpenWrt"
-    make -j {{job_count}} {{make_flags}} 2>&1 | tee "${LOG_DIR}/{{log_file}}" | grep -i -E "^make.*(error|[12345]...Entering dir)"
-    just _cleanup
-    just _log info "Build complete - Logs: ${LOG_DIR}/{{log_file}}"
+    make -j {{jobs}} {{make_flags}}
 
-# Build the OpenWrt image with all steps
-[no-exit-message]
-fullbuild: _init _check_openwrt_source
-    just _update_install_feeds
-    just _download_apps
-    just _run_llvm_fix
-    just _build_steps {{jobs}} "build.log"
 
-# Build the OpenWrt image without updating feeds
-[no-exit-message]
-build: _init _check_openwrt_source
-    just _run_llvm_fix
-    just _build_steps {{jobs}} "build.log"
+build: llvm-fix
+    just _configure_llvm
+    make defconfig
+    make -j {{jobs}} {{make_flags}}
 
-# Build with single thread and verbose output
-[no-exit-message]
-debug: _init _check_openwrt_source
-    just _run_llvm_fix
-    just _build_steps "1" "build_debug.log"
 
-# Configure LLVM toolchain settings in OpenWrt
-[no-exit-message]
-llvm-fix: _init _check_openwrt_source
-    just _run_llvm_fix
+debug: llvm-fix
+    just _configure_llvm
+    make defconfig
+    make -j1 {{make_flags}}
+
+
+[script("/usr/bin/local/llvm-fix")]
+llvm-fix:

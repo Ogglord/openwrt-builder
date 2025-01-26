@@ -6,7 +6,7 @@ if status is-interactive
         bass source /etc/profile
     end
 
-    alias just='just --justfile /etc/just/justfile --working-directory .'
+    alias just='just --justfile /etc/just/justfile --unstable --working-directory .'
 
     function fish_prompt
             ## modify the default 
