@@ -23,7 +23,6 @@ gpgsm
 hostname
 iproute2
 iputils-ping
-just
 keyutils
 language-pack-en
 less

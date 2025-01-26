@@ -48,6 +48,9 @@ touch /.llvm_installed
 touch /.shims_installed
 echo "export TMUX_TMPDIR=/var/tmp" >> /etc/profile
 
+# Install just
+curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/bin
+
 # Configure system settings
 sed -i 's/obscure yescrypt/minlen=2 nullok/' /etc/pam.d/common-password
 
