@@ -30,7 +30,6 @@ less
 libcap2-bin
 libegl-mesa0
 libegl1
-libegl1-mesa
 libgl1
 libglx-mesa0
 libkrb5-3

@@ -48,17 +48,9 @@ touch /.llvm_installed
 touch /.shims_installed
 echo "export TMUX_TMPDIR=/var/tmp" >> /etc/profile
 
-# Setup fish shell and justfile
-mkdir -p /etc/fish/functions /etc/just
-cp -r /shell/bass/* /etc/fish/functions/
-cp /shell/config.fish /etc/fish/
-cp /scripts/justfile /etc/just/
-chmod 644 /etc/fish/functions/__bass.py /etc/fish/functions/bass.fish
-echo "alias just='just --justfile /etc/just/justfile --working-directory .'" >> /etc/profile
-
 # Configure system settings
 sed -i 's/obscure yescrypt/minlen=2 nullok/' /etc/pam.d/common-password
 
 # Cleanup
 apt-get clean > /dev/null
-rm -rf /var/lib/apt/lists/* /setup-env.sh /distrobox-shims.sh /openwrt-builder.packages /shell /scripts
+rm -rf /var/lib/apt/lists/* /setup-env.sh /distrobox-shims.sh /openwrt-builder.packages
