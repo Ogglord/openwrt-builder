@@ -8,7 +8,7 @@ set unstable
 
 # Build settings
 jobs := env_var_or_default("BUILD_JOBS", num_cpus())
-make_flags := "world"
+extra_make_flags := ""
 remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
 
 # Show available recipes
@@ -42,22 +42,24 @@ update_feeds:
     ./scripts/feeds install -a
 
 # Build recipes
-fullbuild: llvm-fix
-    just update_feeds
+fullbuild: llvm-fix update_feeds
     make download
     make defconfig
-    make -j {{jobs}} {{make_flags}}
+    make clean
+    make -j {{jobs}} {{extra_make_flags}} world
 
 
 build: llvm-fix
     make defconfig
-    make -j {{jobs}} {{make_flags}}
+    make -j {{jobs}} {{make_flags}} world
 
 
 debug: llvm-fix
     make defconfig
-    make -j1 V=s
+    make -j1 V=s {{extra_make_flags}} world
 
-
-[script("/usr/local/bin/llvm-fix")]
+[no-cd]
+[script("/bin/bash")]
 llvm-fix:
+  echo "Invoking /usr/local/bin/llvm-fix"
+  exec /usr/local/bin/llvm-fix
