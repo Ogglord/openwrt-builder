@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "source": "executables/buildo",
+      "target": "/usr/local/bin/buildo",
+      "executable": true
+    },
+    {
+      "source": "executables/llvm-fix",
+      "target": "/usr/local/bin/llvm-fix",
+      "executable": true
+    },
+    {
+      "source": "executables/stdout-filter",
+      "target": "/usr/local/bin/stdout-filter",
+      "executable": true
+    },
+    {
+      "source": "executables/stdout-filter-test",
+      "target": "/usr/local/bin/stdout-filter-test",
+      "executable": true
+    },
+    {
+      "source": "executables/fetch_executables_git",
+      "target": "/usr/local/bin/fetch_executables_git",
+      "executable": true
+    },
+    {
+      "source": "shell/justfile",
+      "target": "/etc/just/justfile",
+      "executable": false
+    }
+  ]
+}

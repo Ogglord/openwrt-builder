@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Test script for stdout-filter
+# Tests all possible color outcomes
+
+# Regular text that shouldn't trigger color formatting
+echo "Regular text with no special formatting"
+echo "if \$ret == \"\"; echo \"ERROR: at line no \$lineno\"" # Error in string literal
+echo "Compile statements that shouldn't be red but something like fError" # Error as part of word
+echo "Text with 'error' inside quotes shouldn't be red"
+echo "Function name like handle_error() shouldn't be red"
+
+# Complex build output
+echo "/home/ogge/repos/openwrt-builder/openwrt/build_dir/target-aarch64_cortex-a53_musl/linux-mediatek_filogic/linux-6.6.74/arch/arm64/boot/dts/mediatek//mt7981-rfb-spim-nand.dtso:20.25-67.6: Warning (spi_bus_reg): /fragment@1/__overlay__/spi_nand@0: SPI bus unit address format error, expected \"1\""
+
+# Long compiler command
+echo "OpenWrt-libtool: install: (cd /home/ogge/repos/openwrt-builder/openwrt/build_dir/target-aarch64_cortex-a53_musl/linux-mediatek_filogic/openvswitch-2.17.9; /bin/sh \"/home/ogge/repos/openwrt-builder/openwrt/build_dir/target-aarch64_cortex-a53_musl/linux-mediatek_filogic/openvswitch-2.17.9/libtool\"  --tag CC --mode=relink aarch64-openwrt-linux-musl-gcc -Werror=format-security)"
+
+# make[0-3] directory entries (green)
+echo "make[0]: Entering directory '/some/path'"
+echo "make[1]: Entering directory '/some/path'"
+echo "make[2]: Entering directory '/some/path'"
+echo "make[3]: Entering directory '/some/path'"
+
+# make[4-9] directory entries (gray)
+echo "make[4]: Entering directory '/some/path'"
+echo "make[5]: Entering directory '/some/path'"
+echo "make[9]: Entering directory '/some/path'"
+
+# Error variations (red)
+echo "error: something went wrong"
+echo "Error: capitalized error"
+echo "ERROR: uppercase error"
+echo "[ERROR] bracketed error"
+
+# Warning (yellow)
+echo "[WARNING] this is a warning message"
+
+# Info (gray)
+echo "[INFO] this is an info message"
+
+# Pipe all test output through stdout-filter
+exec 1> >(./stdout-filter)
