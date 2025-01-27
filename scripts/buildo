@@ -1,10 +1,10 @@
 #!/bin/bash
 # OpenWrt Build Helper Script
-# Version: 0.2
+# Version: 0.3
 # Author: github.com/Ogglord
 
-# Enable strict error handling
-set -euo pipefail
+# Enable pipe failure detection but allow commands to fail gracefully
+set -uo pipefail
 
 # Color codes for output
 RED='\033[0;31m'
@@ -17,7 +17,10 @@ LOG_DIR="./build_logs"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Create log directory if it doesn't exist
-mkdir -p "$LOG_DIR"
+if ! mkdir -p "$LOG_DIR" 2>/dev/null; then
+    echo -e "${RED}[ERROR]${NC} Cannot create log directory: $LOG_DIR" >&2
+    exit 1
+fi
 
 # Logging function
 log() {
@@ -41,24 +44,36 @@ log() {
             ;;
     esac
     
-    # Log to file
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $level: $message" >> "$log_file"
+    # Log to file with error handling
+    if ! echo "[$(date '+%Y-%m-%d %H:%M:%S')] $level: $message" >> "$log_file" 2>/dev/null; then
+        echo -e "${RED}[ERROR]${NC} Cannot write to log: $log_file" >&2
+        # Continue execution but warn about logging failure
+    fi
 }
 
 # Cleanup function to manage log files
 cleanup() {
-    log "info" "Cleaning up old log files..."
+    log "info" "Rotating logs"
     
-    # Keep only the last 5 log files for each type
-    find "$LOG_DIR" -type f -name "*_error_*.log" | sort | head -n -5 | xargs -r rm
-    find "$LOG_DIR" -type f -name "*_warning_*.log" | sort | head -n -5 | xargs -r rm
-    find "$LOG_DIR" -type f -name "*_info_*.log" | sort | head -n -5 | xargs -r rm
+    # More resilient cleanup using find's -delete
+    for type in error warning info; do
+        if [ -d "$LOG_DIR" ]; then
+            # Save the 5 most recent logs
+            readarray -t keep < <(find "$LOG_DIR" -type f -name "*_${type}_*.log" 2>/dev/null | sort | tail -n 5)
+            # Delete older logs
+            if [ ${#keep[@]} -gt 0 ]; then
+                local pattern=$(printf "! -name %s " "${keep[@]##*/}")
+                find "$LOG_DIR" -type f -name "*_${type}_*.log" $pattern -delete 2>/dev/null
+            fi
+        fi
+    done
 }
 
-# Trap cleanup on script exit
+# Trap cleanup and errors
 trap cleanup EXIT
+trap 'log "error" "Command failed: $BASH_COMMAND"' ERR
 
-echo -e "${GREEN}OpenWrt Build Helper Script version 0.2${NC} - github.com/Ogglord"
+echo -e "${GREEN}OpenWrt Build Helper Script version 0.3${NC} - github.com/Ogglord"
 echo "-"
 
 # Function to check if current directory is an OpenWrt source folder
@@ -98,7 +113,7 @@ check_openwrt_source() {
         exit 1
     fi
     
-    log "info" "OpenWrt source directory validated successfully"
+    log "info" "Source directory valid"
 }
 
 # Function to check dependencies
@@ -107,7 +122,7 @@ check_dependencies() {
     local deps=(make git sed)
     for dep in "${deps[@]}"; do
         if ! command -v "$dep" >/dev/null 2>&1; then
-            log "error" "Required command '$dep' not found"
+            log "error" "Missing required command: $dep"
             exit 1
         fi
     done
@@ -118,7 +133,7 @@ usage() {
     echo "OpenWrt Build Helper Script"
     echo "Version: 0.2"
     echo ""
-    echo "Usage: $0 <mode> [--dry-run]"
+    echo "Usage: $0 <mode>"
     echo ""
     echo "Modes:                                      | Log file:"
     echo "  full   - Update+Install Feeds               feeds.log "
@@ -126,150 +141,158 @@ usage() {
     echo "           Build                              build.log"
     echo "  normal - Build only                         build.log"
     echo "  debug  - Build (single thread verbose)      build_debug.log"
-    echo ""
-    echo "Options:"
-    echo "  --dry-run   Simulate the build process without making changes"
     exit 1
 }
-
-# Function to handle errors
-error_exit() {
-    log "error" "Error occurred on line $1. Exiting script."
-    log "error" "Check output, build.log or build_debug.log for errors during build or other steps."
-    exit 1
-}
-
-# Trap errors and call error_exit with the line number
-trap 'error_exit $LINENO' ERR
 
 update_install_feeds() {
     local REMOVE_APPS="audit busybox kexec-tools lldpd policycoreutils"
     local INSTALL_APPS="busybox kexec-tools lldpd policycoreutils"
 
-    log "info" "Step 1. Updating and installing all feeds..."
-    ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log"
+    log "info" "Updating feeds"
+    if ! ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log"; then
+        log "error" "Feed update failed"
+        exit 1
+    fi
 
-    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log"
+    if ! ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log"; then
+        log "error" "Feed installation failed"
+        exit 1
+    fi
 
-    log "info" "Reinstalling apps that fail on the first attempt..."
-    ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log"
-    #./scripts/feeds install $INSTALL_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log"
+    log "info" "Reinstalling problematic packages"
+    if ! ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log"; then
+        log "warning" "Package uninstall incomplete - continuing"
+    fi
 
-    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log"
-    log "info" "Step 1. COMPLETED. Logs at $LOG_DIR/feeds.log"
+    if ! ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log"; then
+        log "error" "Feed reinstallation failed"
+        exit 1
+    fi
+    log "info" "Feeds updated - logs: $LOG_DIR/feeds.log"
 }
 
 download_apps(){
     # Run make download
-    log "info" "Step 2. Running 'make -j1 download'. Logging to $LOG_DIR/download.log"
-    make -j1 download | tee "$LOG_DIR/download.log"
-    log "info" "Step 2. COMPLETED. Logs at $LOG_DIR/download.log"
+    log "info" "Downloading packages"
+    if ! make -j1 download 2>&1 | tee "$LOG_DIR/download.log"; then
+        log "error" "Package download failed"
+        exit 1
+    fi
+    log "info" "Downloads complete - logs: $LOG_DIR/download.log"
 }   
 
 run_llvm_fix() {
-    log "info" "Validating LLVM config options using 'llvm-fix'"
-    if [ -x "/usr/local/bin/llvm-fix" ]; then
-        /usr/local/bin/llvm-fix 2>&1 | tee "$LOG_DIR/llvm_fix.log"
-    else
+    log "info" "Configuring LLVM toolchain"
+    if [ ! -x "/usr/local/bin/llvm-fix" ]; then
         log "error" "LLVM fix script not found at /usr/local/bin/llvm-fix"
         exit 1
     fi
+    
+    if ! /usr/local/bin/llvm-fix 2>&1 | tee "$LOG_DIR/llvm_fix.log"; then
+        log "error" "LLVM fix failed"
+        exit 1
+    fi
+}
+
+# Format build output with colors and simplified paths
+format_build_output() {
+    local log_file="$1"
+    local tmp_file
+    tmp_file=$(mktemp) || {
+        log "error" "Cannot create temp file"
+        return 1
+    }
+    
+    # Ensure temp file cleanup on any exit
+    trap 'rm -f "$tmp_file"' EXIT
+    
+    # Capture the entire output first
+    if ! tee "$log_file" > "$tmp_file"; then
+        log "error" "Cannot capture build output"
+        return 1
+    }
+    
+    # Process and colorize the output
+    if ! grep -i -E "^make.*(error|[12345]...Entering dir)" "$tmp_file" | \
+         sed "s|$(pwd)/|./|g" | \
+         while IFS= read -r line; do
+            if [[ $line =~ [Ee]rror ]]; then
+                echo -e "${RED}${line}${NC}"
+            elif [[ $line =~ ^make\[[123]\] ]]; then
+                echo -e "${YELLOW}${line}${NC}"
+            else
+                echo -e "${GREEN}${line}${NC}"
+            fi
+         done; then
+        log "warning" "Format failed - showing raw output"
+        cat "$tmp_file"
+    fi
+    
+    return 0
 }
 
 build() {
     # Run LLVM fix before building
     run_llvm_fix
 
-    log "info" "Running make defconfig just in case..."
-    make defconfig
+    log "info" "Running defconfig"
+    if ! make defconfig; then
+        log "error" "defconfig failed"
+        exit 1
+    fi
 
     case $MODE in
         debug)
             # Build in debug mode            
-            log "info" "STEP 3. Starting actual build process (world) in DEBUG mode..."
-            log "info" "'make -j1 V=s world'..." 
-            make -j1 V=s world 2>&1 | tee "$LOG_DIR/build_debug.log"
-            log "info" "Step 3. COMPLETED. Logs at $LOG_DIR/build_debug.log"
+            log "info" "Building OpenWrt (debug mode)"
+            if ! make -j1 V=s world 2>&1 | format_build_output "$LOG_DIR/build_debug.log"; then
+                log "error" "Debug build failed - see $LOG_DIR/build_debug.log"
+                exit 1
+            fi
+            log "info" "Build complete - logs: $LOG_DIR/build_debug.log"
             ;;
         full|normal)
             # Exit immediately on error for non-debug modes        
-            log "info" "STEP 3. Starting actual build process (world)"
-            log "info" "'make -j $(($(nproc)+1)) V=s world'..."        
-            make -j $(($(nproc)+1)) V=s world 2>&1 | tee "$LOG_DIR/build.log" | grep -i -E "^make.*(error|[12345]...Entering dir)"
-            log "info" "Step 3. COMPLETED. Logs at $LOG_DIR/build.log"
+            log "info" "Building OpenWrt"
+            if ! make -j $(($(nproc)+1)) V=s world 2>&1 | format_build_output "$LOG_DIR/build.log"; then
+                log "error" "Build failed - see $LOG_DIR/build.log"
+                exit 1
+            fi
+            log "info" "Build complete - logs: $LOG_DIR/build.log"
             ;;
         *)
-            log "error" "Unable to build, unknown mode: $MODE."
+            log "error" "Invalid build mode: $MODE"
             exit 1
             ;;
     esac
 }
 
 # Parse command-line arguments
-DRY_RUN=false
-MODE=""
+MODE="${1:-}"
 
-# First argument must be the mode
-if [ $# -lt 1 ]; then
+# Validate mode
+if [ -z "$MODE" ]; then
     log "error" "No build mode specified"
     usage
     exit 1
 fi
 
-# Get the mode from first argument
-case "$1" in
+case "$MODE" in
     full|normal|debug)
-        MODE="$1"
-        shift
+        : # Valid mode
         ;;
     *)
-        log "error" "Invalid mode: $1"
+        log "error" "Invalid mode: $MODE"
         usage
         exit 1
         ;;
 esac
 
-# Process remaining arguments
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --dry-run)
-            DRY_RUN=true
-            ;;
-        *)
-            log "error" "Invalid argument: $1"
-            usage
-            exit 1
-            ;;
-    esac
-    shift
-done
+# Pre-check OpenWrt source directory and dependencies
+check_openwrt_source || exit 1
+check_dependencies || exit 1
 
-# Pre-check OpenWrt source directory
-check_openwrt_source
-
-# Check dependencies
-check_dependencies
-
-# Dry run mode
-if [ "$DRY_RUN" = true ]; then
-    log "info" "Dry run mode enabled. Simulating build process..."
-    case $MODE in
-        full)
-            log "info" "[DRY RUN] Would update and install feeds using ./scripts/feeds"
-            log "info" "[DRY RUN] Would download apps using make download"
-            log "info" "[DRY RUN] Would build in ${MODE^^} mode"
-            ;;
-        normal)
-            log "info" "[DRY RUN] Would build in ${MODE^^} mode"
-            ;;
-        debug)
-            log "info" "[DRY RUN] Would build in ${MODE^^} mode"
-            ;;
-    esac
-    exit 0
-fi
-
-# Actual build process
+# Build process
 case $MODE in
     full)
         update_install_feeds
@@ -283,8 +306,8 @@ case $MODE in
         build
     ;;    
     *)
-    log "error" "Invalid command"
+    log "error" "Invalid operation"
     exit 1
 esac    
 
-log "info" "Build process completed in ${MODE^^} mode! Check logs in $LOG_DIR for full output."
+log "info" "Build completed (${MODE^^}) - logs: $LOG_DIR"

@@ -42,7 +42,7 @@ update_feeds:
     ./scripts/feeds install -a
 
 # Build recipes
-fullbuild: llvm-fix update_feeds
+build-all: llvm-fix update_feeds
     make download
     make defconfig
     make clean
