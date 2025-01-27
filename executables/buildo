@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # OpenWrt Build Helper Script
-# Version: 0.3
+# Version: 0.3 (dev)
 # Author: github.com/Ogglord
 
 # Enable pipe failure detection but allow commands to fail gracefully
