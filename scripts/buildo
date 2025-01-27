@@ -197,36 +197,24 @@ run_llvm_fix() {
 # Format build output with colors and simplified paths
 format_build_output() {
     local log_file="$1"
-    local tmp_file
-    tmp_file=$(mktemp) || {
-        log "error" "Cannot create temp file"
-        return 1
-    }
     
-    # Ensure temp file cleanup on any exit
-    trap 'rm -f "$tmp_file"' EXIT
-    
-    # Capture the entire output first
-    if ! tee "$log_file" > "$tmp_file"; then
-        log "error" "Cannot capture build output"
-        return 1
-    fi
-    
-    # Process and colorize the output
-    if ! grep -i -E "^make.*(error|[12345]...Entering dir)" "$tmp_file" | \
-         sed "s|$(pwd)/|./|g" | \
-         while IFS= read -r line; do
-            if [[ $line =~ [Ee]rror ]]; then
-                echo -e "${RED}${line}${NC}"
-            elif [[ $line =~ ^make\[[123]\] ]]; then
-                echo -e "${YELLOW}${line}${NC}"
-            else
-                echo -e "${GREEN}${line}${NC}"
-            fi
-         done; then
-        log "warning" "Format failed - showing raw output"
-        cat "$tmp_file"
-    fi
+    # Process and colorize the output in real-time
+    while IFS= read -r line; do
+        # Save to log file
+        echo "$line" >> "$log_file"
+        
+        # Simplify paths
+        line=$(echo "$line" | sed "s|$(pwd)/|./|g")
+        
+        # Only show make directory entries and actual error messages
+        if [[ $line =~ make\[([0-3])\].*"Entering directory" ]]; then
+            echo -e "${YELLOW}${line}${NC}"
+        elif [[ $line =~ make\[[4-9]\].*"Entering directory" ]]; then
+            echo -e "${GREEN}${line}${NC}"
+        elif [[ $line =~ ^[^\"]*[Ee]rror:.*$ ]] || [[ $line =~ ^[^\"]*ERROR:.*$ ]]; then
+            echo -e "${RED}${line}${NC}"
+        fi
+    done
     
     return 0
 }
