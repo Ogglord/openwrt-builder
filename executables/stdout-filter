@@ -32,6 +32,7 @@ while IFS= read -r line; do
     elif [[ $line =~ ^\[INFO\] ]]; then
         echo -e "${GRAY}${line}${NC}"
     else
-        echo "$line"
+        #suppress
+        #echo "$line"
     fi
 done
