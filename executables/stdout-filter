@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# OpenWrt Build Makefile Filter
+# Version: 0.1
+# Author: github.com/Ogglord
+
+# Enable pipe failure detection
+set -uo pipefail
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+GRAY='\033[0;90m'
+NC='\033[0m' # No Color
+
+# Process and colorize the output in real-time from stdin
+while IFS= read -r line; do
+    # Simplify paths
+    line=$(echo "$line" | sed "s|$(pwd)/|./|g")
+    
+    # Process the line based on its content
+    if [[ $line =~ make\[([0-3])\].*"Entering directory" ]]; then
+        echo -e "${GREEN}${line}${NC}"
+    elif [[ $line =~ make\[[4-9]\].*"Entering directory" ]]; then
+        echo -e "${GRAY}${line}${NC}"
+    elif [[ $line =~ ^[^\"]*[Ee]rror:.*$ ]] || [[ $line =~ ^[^\"]*ERROR:.*$ ]]; then
+        echo -e "${RED}${line}${NC}"
+    elif [[ $line =~ ^\[ERROR\] ]]; then
+        echo -e "${RED}${line}${NC}"
+    elif [[ $line =~ ^\[WARNING\] ]]; then
+        echo -e "${YELLOW}${line}${NC}"
+    elif [[ $line =~ ^\[INFO\] ]]; then
+        echo -e "${GRAY}${line}${NC}"
+    else
+        echo "$line"
+    fi
+done

@@ -15,6 +15,7 @@ on:
 env:
     IMAGE_TAGS: latest
     IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+    GIT_BRANCH: ${{ github.ref_name }}
 
 jobs:
   push-ghcr:
@@ -48,9 +49,13 @@ jobs:
       - name: Build Image
         id: build_image
         uses: redhat-actions/buildah-build@v2
+        env:
+          GIT_BRANCH: ${{ env.GIT_BRANCH }}
         with:
           containerfiles: |
             ./ContainerFiles/${{ matrix.containerfile }}
+          build-args: |
+            GIT_BRANCH=${{ env.GIT_BRANCH }}
           image: ${{ matrix.containerfile }}
           tags: ${{ env.IMAGE_TAGS }}
           labels: ${{ steps.meta.outputs.labels }}

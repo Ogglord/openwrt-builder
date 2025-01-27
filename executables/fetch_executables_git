@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# Check if running as root or with sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "This script must be run as root or with sudo"
+    exit 1
+fi
+
+# Set branch from: 1st argument, then GIT_BRANCH env var, then default to main
+BRANCH=${1:-${GIT_BRANCH:-main}}
+
+# Base URL for raw GitHub content
+BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/$BRANCH"
+
+# Create temp directory
+TMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+# Check if jq is available
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is required but not installed"
+    exit 1
+fi
+
+# Function to validate JSON
+validate_json() {
+    if jq empty "$1" 2>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Download and parse manifest
+echo "Fetching update manifest from $BRANCH branch..."
+MANIFEST_PATH="$TMP_DIR/update-manifest.json"
+LOCAL_MANIFEST="/update-manifest.json"
+
+# Try to download manifest
+if curl -sS -L -f "$BASE_URL/update-manifest.json" -o "$MANIFEST_PATH"; then
+    if ! validate_json "$MANIFEST_PATH"; then
+        echo "Downloaded manifest is not valid JSON"
+        if [ -f "$LOCAL_MANIFEST" ]; then
+            echo "Falling back to local manifest..."
+            cp "$LOCAL_MANIFEST" "$MANIFEST_PATH"
+        else
+            echo "No valid manifest found"
+            exit 1
+        fi
+    fi
+else
+    echo "Failed to download manifest from $BRANCH branch"
+    if [ -f "$LOCAL_MANIFEST" ]; then
+        echo "Falling back to local manifest..."
+        cp "$LOCAL_MANIFEST" "$MANIFEST_PATH"
+    else
+        echo "No local manifest found"
+        exit 1
+    fi
+fi
+
+# Process each file in the manifest
+echo "Processing updates from manifest..."
+jq -c '.files[]' "$MANIFEST_PATH" | while read -r file; do
+    source=$(echo "$file" | jq -r '.source')
+    target=$(echo "$file" | jq -r '.target')
+    is_executable=$(echo "$file" | jq -r '.executable')
+    
+    echo "Fetching $source..."
+    
+    # Create target directory if it doesn't exist
+    target_dir=$(dirname "$target")
+    mkdir -p "$target_dir"
+    
+    # Download to temp directory first
+    filename=$(basename "$source")
+    if ! curl -sS -L -f "$BASE_URL/$source" -o "$TMP_DIR/$filename"; then
+        echo "Failed to download $source"
+        continue
+    fi
+    
+    # Handle self-update case
+    if [ "$target" = "/usr/local/bin/fetch_executables_git" ] && [ -f "$target" ]; then
+        mv "$TMP_DIR/$filename" "$TMP_DIR/${filename}.new"
+        mv "$TMP_DIR/${filename}.new" "$target"
+    else
+        mv "$TMP_DIR/$filename" "$target"
+    fi
+    
+    # Set executable permission if needed
+    if [ "$is_executable" = "true" ]; then
+        chmod +x "$target"
+    fi
+    
+    echo "Installed $source to $target"
+done
+
+echo "All files have been fetched and installed"

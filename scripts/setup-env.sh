@@ -56,4 +56,4 @@ sed -i 's/obscure yescrypt/minlen=2 nullok/' /etc/pam.d/common-password
 
 # Cleanup
 apt-get clean > /dev/null
-rm -rf /var/lib/apt/lists/* /setup-env.sh /distrobox-shims.sh /openwrt-builder.packages
+rm -rf /var/lib/apt/lists/* 
