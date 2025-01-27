@@ -16,18 +16,47 @@ BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/$BRANCH"
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# Download and parse manifest
-echo "Fetching update manifest from $BRANCH branch..."
-MANIFEST_PATH="$TMP_DIR/update-manifest.json"
-if ! curl -sS -L "$BASE_URL/update-manifest.json" -o "$MANIFEST_PATH"; then
-    echo "Failed to download update manifest"
-    exit 1
-fi
-
 # Check if jq is available
 if ! command -v jq >/dev/null 2>&1; then
     echo "Error: jq is required but not installed"
     exit 1
+fi
+
+# Function to validate JSON
+validate_json() {
+    if jq empty "$1" 2>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Download and parse manifest
+echo "Fetching update manifest from $BRANCH branch..."
+MANIFEST_PATH="$TMP_DIR/update-manifest.json"
+LOCAL_MANIFEST="/update-manifest.json"
+
+# Try to download manifest
+if curl -sS -L -f "$BASE_URL/update-manifest.json" -o "$MANIFEST_PATH"; then
+    if ! validate_json "$MANIFEST_PATH"; then
+        echo "Downloaded manifest is not valid JSON"
+        if [ -f "$LOCAL_MANIFEST" ]; then
+            echo "Falling back to local manifest..."
+            cp "$LOCAL_MANIFEST" "$MANIFEST_PATH"
+        else
+            echo "No valid manifest found"
+            exit 1
+        fi
+    fi
+else
+    echo "Failed to download manifest from $BRANCH branch"
+    if [ -f "$LOCAL_MANIFEST" ]; then
+        echo "Falling back to local manifest..."
+        cp "$LOCAL_MANIFEST" "$MANIFEST_PATH"
+    else
+        echo "No local manifest found"
+        exit 1
+    fi
 fi
 
 # Process each file in the manifest
@@ -45,7 +74,7 @@ jq -c '.files[]' "$MANIFEST_PATH" | while read -r file; do
     
     # Download to temp directory first
     filename=$(basename "$source")
-    if ! curl -sS -L "$BASE_URL/$source" -o "$TMP_DIR/$filename"; then
+    if ! curl -sS -L -f "$BASE_URL/$source" -o "$TMP_DIR/$filename"; then
         echo "Failed to download $source"
         continue
     fi
