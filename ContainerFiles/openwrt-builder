@@ -18,7 +18,7 @@ LABEL com.github.containers.toolbox="true" \
 COPY ../scripts/setup-env.sh /
 COPY ../scripts/distrobox-shims.sh /
 COPY ../packages/openwrt-builder.packages /
-COPY ../fetch_executables_git /
+COPY ../executables/fetch_executables_git /
 
 # Set permissions and run setup
 RUN chmod +x /setup-env.sh /distrobox-shims.sh /usr/local/bin/fetch_executables_git && \
