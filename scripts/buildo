@@ -210,7 +210,7 @@ format_build_output() {
     if ! tee "$log_file" > "$tmp_file"; then
         log "error" "Cannot capture build output"
         return 1
-    }
+    fi
     
     # Process and colorize the output
     if ! grep -i -E "^make.*(error|[12345]...Entering dir)" "$tmp_file" | \
