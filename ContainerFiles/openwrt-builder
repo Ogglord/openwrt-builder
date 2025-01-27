@@ -2,17 +2,20 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG GO_VERSION=1.22.5
 ARG ARCH=amd64
 ARG UBUNTU_VERSION=24.04
+ARG GIT_BRANCH
 
 FROM quay.io/toolbx/ubuntu-toolbox:${UBUNTU_VERSION}
 
 ENV GO_VERSION=${GO_VERSION}
 ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
 ENV ARCH=${ARCH}
+ENV GIT_BRANCH=${GIT_BRANCH:-missing}
 
 LABEL com.github.containers.toolbox="true" \
       usage="This image is meant to be used with the toolbox or distrobox command" \
       summary="This is an environment aimed at building OpenWRT images" \
-      maintainer="oag@proton.me"
+      maintainer="oag@proton.me" \
+      branch="${GIT_BRANCH}"
 
 # Copy files to their final destinations
 COPY ../scripts/setup-env.sh /
@@ -24,7 +27,7 @@ COPY ../update-manifest.json /
 # Set permissions and run setup
 RUN chmod +x /setup-env.sh /distrobox-shims.sh /fetch_executables_git.sh && \
     GO_VERSION=${GO_VERSION} DEBIAN_FRONTEND=${DEBIAN_FRONTEND} ARCH=${ARCH} /setup-env.sh && \
-    /fetch_executables_git.sh && \
+    /fetch_executables_git.sh ${GIT_BRANCH} && \
     rm /setup-env.sh /distrobox-shims.sh /fetch_executables_git.sh /openwrt-builder.packages
 
 # Copy fish config, justfile, bass plugin as final step
