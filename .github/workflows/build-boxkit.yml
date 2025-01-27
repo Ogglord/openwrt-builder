@@ -54,6 +54,8 @@ jobs:
         with:
           containerfiles: |
             ./ContainerFiles/${{ matrix.containerfile }}
+          build-args: |
+            GIT_BRANCH=${{ env.GIT_BRANCH }}
           image: ${{ matrix.containerfile }}
           tags: ${{ env.IMAGE_TAGS }}
           labels: ${{ steps.meta.outputs.labels }}
