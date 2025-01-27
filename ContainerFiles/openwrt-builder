@@ -23,7 +23,7 @@ COPY ../executables/fetch_executables_git /fetch_executables_git.sh
 # Set permissions and run setup
 RUN chmod +x /setup-env.sh /distrobox-shims.sh /fetch_executables_git.sh && \
     GO_VERSION=${GO_VERSION} DEBIAN_FRONTEND=${DEBIAN_FRONTEND} ARCH=${ARCH} /setup-env.sh && \
-    /fetch_executables_git && \
+    /fetch_executables_git.sh && \
     rm /setup-env.sh /distrobox-shims.sh /fetch_executables_git.sh /openwrt-builder.packages
 
 # Copy fish config, justfile, bass plugin as final step
