@@ -31,10 +31,10 @@ if status is-interactive
         set_color --bold yellow
         echo -n "Write ´owrt-llvm-config´"
         set_color normal
-        echo " to update the .config to use the LLVM toolchain"
+        echo " to update the .config to use the LLVM toolchain if you use regular make directly"
         echo "--"
         set_color normal
-        echo "Note: Both tools must be run from root of the source folder"
+        echo "Note: Both tools must be run from the source folder"
         set_color --bold green
         echo "################################"
         set_color normal
