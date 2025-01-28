@@ -7,13 +7,14 @@ on:
   push:
     branches:
       - main
-    paths-ignore: # don't rebuild on documentation change
+    paths-ignore: # don't rebuild on documentation change or executables only
       - '**.md'
+      - './executables/**'
   schedule:
     - cron: '0 0 * * TUE'
 
 env:
-    IMAGE_TAGS: latest
+    IMAGE_TAGS: ${{ github.ref_name == 'main' && 'latest' || github.ref_name }}
     IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
     GIT_BRANCH: ${{ github.ref_name }}
 
