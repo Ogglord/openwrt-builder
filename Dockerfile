@@ -4,17 +4,17 @@ FROM quay.io/toolbx/ubuntu-toolbox:${UBUNTU_VERSION}
 ARG DEBIAN_FRONTEND="noninteractive"
 ARG GO_VERSION=1.22.5
 ARG ARCH=amd64
-ARG GIT_BRANCH
+ARG GIT_BRANCH="main"
 ENV GO_VERSION=${GO_VERSION}
-ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
+ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND:-noninteractive}
 ENV ARCH=${ARCH}
 ENV GIT_BRANCH=${GIT_BRANCH}
 
 LABEL com.github.containers.toolbox="true" \
-      usage="This image is meant to be used with the toolbox or distrobox command" \
-      summary="This is an environment aimed at building OpenWRT images" \
-      maintainer="oag@proton.me" \
-      branch=${GIT_BRANCH}
+    usage="This image is meant to be used with the toolbox or distrobox command" \
+    summary="This is an environment aimed at building OpenWRT images" \
+    maintainer="oag@proton.me" \
+    branch="${GIT_BRANCH}"
 
 # Copy files to their final destinations
 COPY ./scripts/buildtime/ /
