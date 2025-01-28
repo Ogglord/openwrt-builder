@@ -8,7 +8,7 @@ It's a docker container/OCI image built to be used with either distrobox or tool
 
 [Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
 
-The image ([ghcr.io/ogglord/openwrt-builder](https://ghcr.io/ogglord/openwrt-builder)) contains Ubuntu with the usual build dependencies + llvm as well as an helper script ```buildo``` that does very little except saves me from typing a lot of repetetive commands and injects the necessary LLVM lines to .config automatically.
+The image ([ghcr.io/ogglord/openwrt-builder](https://ghcr.io/ogglord/openwrt-builder)) contains Ubuntu with the usual build dependencies + llvm as well as an helper script ```owrt-builder``` that does very little except saves me from typing a lot of repetetive commands and injects the necessary LLVM lines to .config automatically (or use ```owrt-llvm-config``` standalone).
 
 ## Getting started
 
@@ -55,12 +55,12 @@ $: git pull
 $: wget https://raw.githubusercontent.com/pesa1234/MT6000_cust_build/refs/heads/main/config_file/.config
 # add your packages etc
 $: make menuconfig
-# use buildo for a single all-in-one-command
-$: buildo full
-# or do the steps yourselves
+# use owrt-build for an easier build process
+$: owrt-build
+# or do the steps yourselves using ./scripts/feeds and make e.g.:
 $: ./scripts/feeds update -a
 $: ./scripts/feeds install -a
-$: llvm_fix # run this to inject the path to LLVM toolchain, important, this is done by buildo command
+$: owrt-llvm-config # run this to inject the path to LLVM toolchain, important, this is done by buildo command
 $: make -j$(nproc) defconfig download clean world
 ```
 
@@ -81,7 +81,7 @@ pull=true
 root=false
 replace=true
 start_now=true
-#additional_packages="ncdu bat"
+#additional_packages="ncdu"
 ```
 
 
