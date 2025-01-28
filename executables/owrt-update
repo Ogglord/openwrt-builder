@@ -1,22 +1,45 @@
 #!/bin/bash
 
+# Exit on any error
+set -e
+
+# Check if running as root
 if [ "$EUID" -ne 0 ]; then
     echo "This script must be run as root or with sudo"
     exit 1
 fi
 
+# If this is the original script, create and execute a temporary copy instead
+if [ -z "$OWRT_UPDATE_TEMP" ]; then
+    TEMP_SCRIPT=$(mktemp)
+    cp "$0" "$TEMP_SCRIPT"
+    chmod +x "$TEMP_SCRIPT"
+    export OWRT_UPDATE_TEMP=1
+    
+    echo "Creating temporary update script..."
+    "$TEMP_SCRIPT" "$@"
+    EXIT_CODE=$?
+    
+    trap 'rm -f "$TEMP_SCRIPT"' EXIT
+    exit $EXIT_CODE
+fi
+
+# Main update logic (runs in temporary copy)
 BRANCH=${GIT_BRANCH:-${1:-main}}
 REPO_URL="https://github.com/Ogglord/openwrt-builder.git"
 TMP_DIR=$(mktemp -d)
 REPO_DIR="$TMP_DIR/update"
 
+# Ensure cleanup on exit
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+# Check for required tools
 if ! command -v jq >/dev/null 2>&1; then
     echo "Error: jq is required but not installed"
     exit 1
 fi
 
+# JSON validation function
 validate_json() {
     if jq empty "$1" 2>/dev/null; then
         return 0
@@ -25,15 +48,18 @@ validate_json() {
     fi
 }
 
+# Clone repository
 echo "Cloning repository from $BRANCH branch..."
 if ! git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$REPO_DIR"; then
     echo "Failed to clone repository"
     exit 1
 fi
 
+# Set manifest paths
 MANIFEST_GIT="$REPO_DIR/update-manifest.json"
 MANIFEST_LOCAL="/update-manifest.json"
 
+# Check manifest existence
 if [ ! -f "$MANIFEST_GIT" ]; then
     echo "No manifest in repository"
     if [ -f "$MANIFEST_LOCAL" ]; then
@@ -45,6 +71,7 @@ if [ ! -f "$MANIFEST_GIT" ]; then
     fi
 fi
 
+# Process manifest and update files
 echo "Processing updates from manifest..."
 jq -c '.files[]' "$MANIFEST_GIT" | while read -r file; do
     source=$(echo "$file" | jq -r '.source')
@@ -53,13 +80,14 @@ jq -c '.files[]' "$MANIFEST_GIT" | while read -r file; do
     
     echo "Processing $source..."
     
-    # Create target directory if it doesn't exist
+    # Create target directory if needed
     target_dir=$(dirname "$target")
     mkdir -p "$target_dir"
     
-    # Copy from local repo
+    # Copy files from local repo
     cp -f "$REPO_DIR/$source" "$target"
     
+    # Set executable permission if needed
     if [ "$is_executable" = "true" ]; then
         chmod +x "$target"
     fi
@@ -67,4 +95,4 @@ jq -c '.files[]' "$MANIFEST_GIT" | while read -r file; do
     echo "Installed $source to $target"
 done
 
-echo "All files have been updated"
+echo "Update completed successfully"
