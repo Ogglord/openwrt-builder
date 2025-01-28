@@ -37,6 +37,3 @@ echo "[WARNING] this is a warning message"
 
 # Info (gray)
 echo "[INFO] this is an info message"
-
-# Pipe all test output through stdout-filter
-exec 1> >(./stdout-filter)

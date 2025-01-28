@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # OpenWrt Build Helper Script
-# Version: 0.3
+# Version: 0.4.1 (dev)
 # Author: github.com/Ogglord
 
-# Enable pipe failure detection but allow commands to fail gracefully
 set -uo pipefail
 
 # Color codes for output
@@ -11,7 +10,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 GRAY='\033[0;90m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # Find the stdout-filter executable
 if command -v stdout-filter >/dev/null 2>&1; then
@@ -28,284 +27,144 @@ fi
 
 # Logging configuration
 LOG_DIR="./build_logs"
-
-# Create log directory if it doesn't exist
-if ! mkdir -p "$LOG_DIR" 2>/dev/null; then
-    echo -e "${RED}[ERROR]${NC} Cannot create log directory: $LOG_DIR" >&2
-    exit 1
-fi
-
-# Get next log number for a given type
-get_next_log_number() {
-    local type="$1"
-    local max=0
-    
-    # Find the highest numbered log file
-    for f in "$LOG_DIR"/"$type"*.log; do
-        if [[ -f "$f" ]]; then
-            num=$(echo "$f" | grep -o '[0-9]*\.log$' | grep -o '[0-9]*')
-            if [[ -n "$num" ]] && ((num > max)); then
-                max=$num
-            fi
-        fi
-    done
-    
-    echo $((max + 1))
-}
+mkdir -p "$LOG_DIR" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Cannot create log directory: $LOG_DIR" >&2; exit 1; }
 
 # Logging function
 log() {
     local level="$1"
     local message="$2"
-    local next_num=$(get_next_log_number "$level")
-    local log_file="${LOG_DIR}/${level}.${next_num}.log"
+    local log_file="${LOG_DIR}/${level}.log"
     
-    # Print to console with color
     case "$level" in
-        "error")
-            echo -e "${RED}[ERROR]${NC} $message" >&2
-            ;;
-        "warning")
-            echo -e "${YELLOW}[WARNING]${NC} $message" >&2
-            ;;
-        "info")
-            echo -e "${GREEN}[INFO]${NC} $message"
-            ;;
-        *)
-            echo "$message"
-            ;;
+        "error") echo -e "${RED}[ERROR]${NC} $message" >&2 ;;
+        "warning") echo -e "${YELLOW}[WARNING]${NC} $message" >&2 ;;
+        "info") echo -e "${GREEN}[INFO]${NC} $message" ;;
+        *) echo "$message" ;;
     esac
     
-    # Log to file
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $level: $message" >> "$log_file"
 }
-
-# Cleanup function to manage log files
-cleanup() {
-    log "info" "Rotating logs"
-    
-    # Keep only the 3 most recent logs for each type
-    for type in error warning info; do
-        if [ -d "$LOG_DIR" ]; then
-            # List all log files for this type, sorted by number
-            readarray -t logs < <(ls -v "$LOG_DIR"/"$type".*.log 2>/dev/null)
-            
-            # Keep only the 3 most recent logs
-            if [ ${#logs[@]} -gt 3 ]; then
-                for ((i=0; i<${#logs[@]}-3; i++)); do
-                    rm -f "${logs[i]}"
-                done
-            fi
-        fi
-    done
-}
-
-# Trap cleanup and errors
-trap cleanup EXIT
-trap 'log "error" "Command failed: $BASH_COMMAND"' ERR
-
-echo -e "${GREEN}OpenWrt Build Helper Script version 0.3${NC} - github.com/Ogglord"
-echo "-"
 
 # Function to check if current directory is an OpenWrt source folder
 check_openwrt_source() {
     local required_dirs=("scripts" "package" "target" "toolchain")
     local required_files=("Makefile" "scripts/feeds")
-    local missing_dirs=()
-    local missing_files=()
     
-    # Check for required directories
     for dir in "${required_dirs[@]}"; do
-        if [ ! -d "$dir" ]; then
-            missing_dirs+=("$dir")
-        fi
+        [ ! -d "$dir" ] && log "error" "Missing directory: $dir" && return 1
     done
     
-    # Check for required files
     for file in "${required_files[@]}"; do
-        if [ ! -f "$file" ]; then
-            missing_files+=("$file")
-        fi
+        [ ! -f "$file" ] && log "error" "Missing file: $file" && return 1
     done
-    
-    # Provide detailed error if any directories or files are missing
-    if [ ${#missing_dirs[@]} -gt 0 ] || [ ${#missing_files[@]} -gt 0 ]; then
-        log "error" "Invalid OpenWrt source directory"
-        
-        if [ ${#missing_dirs[@]} -gt 0 ]; then
-            log "error" "Missing directories: ${missing_dirs[*]}"
-        fi
-        
-        if [ ${#missing_files[@]} -gt 0 ]; then
-            log "error" "Missing files: ${missing_files[*]}"
-        fi
-        
-        log "error" "Make sure you're running this script from the OpenWrt root directory"
-        exit 1
-    fi
     
     log "info" "Source directory valid"
+    return 0
 }
 
 # Function to check dependencies
 check_dependencies() {
-    # Check system commands
     local deps=(make git sed)
     for dep in "${deps[@]}"; do
         if ! command -v "$dep" >/dev/null 2>&1; then
             log "error" "Missing required command: $dep"
-            exit 1
+            return 1
         fi
     done
 }
 
 # Function to display usage
 usage() {
-    echo "OpenWrt Build Helper Script"
-    echo "Version: 0.2"
-    echo ""
-    echo "Usage: $0 <mode>"
-    echo ""
-    echo "Modes:                                      | Log file:"
-    echo "  all    - Update+Install Feeds               feeds.log "
-    echo "           Download,                          download.log +"
-    echo "           Build                              build.log"
-    echo "  world  - Build only                         build.log"
-    echo "  debug  - Build (single thread verbose)      build_debug.log"
-    echo "  feeds  - Update+Install Feeds only          feeds.log"
+    cat << EOF
+OpenWrt Build Helper Script
+Version: 0.4.1
+
+Usage: $0 <mode>
+
+Modes:                                      | Log file:
+  all    - Update+Install Feeds               feeds.log    +
+           Download,                          download.log +
+           Build                              build.log
+  world  - Build only                         build.log
+  debug  - Build (single thread verbose)      build_debug.log
+  feeds  - Update+Install Feeds only          feeds.log
+  -----
+  update - Self-update all helper executables from git
+EOF
     exit 1
 }
 
 update_install_feeds() {
     local REMOVE_APPS="audit busybox kexec-tools lldpd policycoreutils"
-    local INSTALL_APPS="busybox kexec-tools lldpd policycoreutils"
-
+    
     log "info" "Updating feeds"
-    if ! { ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log" | "$LOG_FILTER"; }; then
-        log "error" "Feed update failed"
-        exit 1
-    fi
-
-    if ! { ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER"; }; then
-        log "error" "Feed installation failed"
-        exit 1
-    fi
-
+    ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log" | "$LOG_FILTER" || { log "error" "Feed update failed"; exit 1; }
+    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" || { log "error" "Feed installation failed"; exit 1; }
+    
     log "info" "Reinstalling problematic packages"
-    if ! { ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER"; }; then
-        log "warning" "Package uninstall incomplete - continuing"
-    fi
-
-    if ! { ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER"; }; then
-        log "error" "Feed reinstallation failed"
-        exit 1
-    fi
+    ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" || log "warning" "Package uninstall incomplete - continuing"
+    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" || { log "error" "Feed reinstallation failed"; exit 1; }
+    
     log "info" "Feeds updated - logs: $LOG_DIR/feeds.log"
 }
 
-download_apps(){
-    # Run make download
+download_apps() {
     log "info" "Downloading packages"
-    if ! { make -j1 download 2>&1 | tee "$LOG_DIR/download.log" | "$LOG_FILTER"; }; then
-        log "error" "Package download failed"
-        exit 1
-    fi
+    make -j1 download 2>&1 | tee "$LOG_DIR/download.log" | "$LOG_FILTER" || { log "error" "Package download failed"; exit 1; }
     log "info" "Downloads complete - logs: $LOG_DIR/download.log"
-}   
+}
 
 run_llvm_fix() {
     log "info" "Configuring LLVM toolchain"
-    if [ ! -x "/usr/local/bin/llvm-fix" ]; then
-        log "error" "LLVM fix script not found at /usr/local/bin/llvm-fix"
-        exit 1
-    fi
-    
-    if ! { /usr/local/bin/llvm-fix 2>&1 | tee "$LOG_DIR/llvm_fix.log" | "$LOG_FILTER"; }; then
-        log "error" "LLVM fix failed"
-        exit 1
-    fi
+    [ ! -x "/usr/local/bin/llvm-fix" ] && { log "error" "LLVM fix script not found"; exit 1; }
+    /usr/local/bin/llvm-fix 2>&1 | tee "$LOG_DIR/llvm_fix.log" | "$LOG_FILTER" || { log "error" "LLVM fix failed"; exit 1; }
 }
 
 build() {
-    # Run LLVM fix before building
     run_llvm_fix
-
+    
     log "info" "Running defconfig"
-    if ! { make defconfig 2>&1 | tee "$LOG_DIR/defconfig.log" | "$LOG_FILTER"; }; then
-        log "error" "defconfig failed"
-        exit 1
+    make defconfig 2>&1 | tee "$LOG_DIR/defconfig.log" | "$LOG_FILTER" || { log "error" "defconfig failed"; exit 1; }
+    
+    local log_file="$LOG_DIR/build.log"
+    local build_cmd="make -j$(($(nproc)+1)) V=s world"
+    
+    if [ "$MODE" = "debug" ]; then
+        log_file="$LOG_DIR/build_debug.log"
+        build_cmd="make -j1 V=s world"
     fi
-
-    case $MODE in
-        debug)
-            # Build in debug mode            
-            log "info" "Building OpenWrt (debug mode)"
-            if ! { make -j1 V=s world 2>&1 | tee "$LOG_DIR/build_debug.log" | "$LOG_FILTER"; }; then
-                log "error" "Debug build failed - see $LOG_DIR/build_debug.log"
-                exit 1
-            fi
-            log "info" "Build complete - logs: $LOG_DIR/build_debug.log"
-            ;;
-        all|world)
-            # Exit immediately on error for non-debug modes
-            log "info" "Building OpenWrt"
-            if ! { make -j $(($(nproc)+1)) V=s world 2>&1 | tee "$LOG_DIR/build.log" | "$LOG_FILTER"; }; then
-                log "error" "Build failed - see $LOG_DIR/build.log"
-                exit 1
-            fi
-            log "info" "Build complete - logs: $LOG_DIR/build.log"
-            ;;
-        *)
-            log "error" "Invalid build mode: $MODE"
-            exit 1
-            ;;
-    esac
+    
+    log "info" "Building OpenWrt${MODE:+ ($MODE mode)}"
+    $build_cmd 2>&1 | tee "$log_file" | "$LOG_FILTER" || { log "error" "Build failed - see $log_file"; exit 1; }
+    log "info" "Build complete - logs: $log_file"
 }
 
-# Parse command-line arguments
-MODE="${1:-}"
+self_update() {
+    log "info" "Running self-update using sudo"
+    [ ! -x "/usr/local/bin/fetch_executables_git" ] && { log "error" "Update script not found"; exit 1; }
+    sudo /usr/local/bin/fetch_executables_git || { log "error" "Self-update failed"; exit 1; }
+}
 
-# Validate mode
-if [ -z "$MODE" ]; then
-    log "error" "No build mode specified"
-    usage
-    exit 1
-fi
+# Main execution
+echo -e "${GREEN}OpenWrt Build Helper Script version 0.3${NC} - github.com/Ogglord"
+echo "-"
+
+MODE="${1:-}"
+[ -z "$MODE" ] && { log "error" "No build mode specified"; usage; }
 
 case "$MODE" in
-    all|world|debug|feeds)
-        : # Valid mode
-        ;;
-    *)
-        log "error" "Invalid mode: $MODE"
-        usage
-        exit 1
-        ;;
+    all|world|debug|feeds|update) : ;;
+    *) log "error" "Invalid mode: $MODE"; usage ;;
 esac
 
-# Pre-check OpenWrt source directory and dependencies
 check_openwrt_source || exit 1
 check_dependencies || exit 1
 
-# Build process
-case $MODE in
-    all)
-        update_install_feeds
-        download_apps
-        build        
-    ;;
-    world)
-        build        
-    ;;
-    debug)
-        build
-    ;;
-    feeds)
-        update_install_feeds
-    ;;
-    *)
-    log "error" "Invalid operation"
-    exit 1
-esac    
+case "$MODE" in
+    all) update_install_feeds; download_apps; build ;;
+    world|debug) build ;;
+    feeds) update_install_feeds ;;
+    update) self_update ;;
+esac
 
 log "info" "Build completed (${MODE^^}) - logs: $LOG_DIR"

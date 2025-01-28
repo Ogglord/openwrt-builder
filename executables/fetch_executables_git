@@ -6,11 +6,11 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Set branch from: 1st argument, then GIT_BRANCH env var, then default to main
-BRANCH=${1:-${GIT_BRANCH:-main}}
+# Set branch from: GIT_BRANCH env var, then 1st argument, then default to main
+BRANCH=${GIT_BRANCH:-${1:-main}}
 
 # Base URL for raw GitHub content
-BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/$BRANCH"
+BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/$BRANCH"
 
 # Create temp directory
 TMP_DIR=$(mktemp -d)
@@ -79,13 +79,9 @@ jq -c '.files[]' "$MANIFEST_PATH" | while read -r file; do
         continue
     fi
     
-    # Handle self-update case
-    if [ "$target" = "/usr/local/bin/fetch_executables_git" ] && [ -f "$target" ]; then
-        mv "$TMP_DIR/$filename" "$TMP_DIR/${filename}.new"
-        mv "$TMP_DIR/${filename}.new" "$target"
-    else
-        mv "$TMP_DIR/$filename" "$target"
-    fi
+    # copy to destination
+    cp -f "$TMP_DIR/${filename}" "$target"
+   
     
     # Set executable permission if needed
     if [ "$is_executable" = "true" ]; then
@@ -95,4 +91,4 @@ jq -c '.files[]' "$MANIFEST_PATH" | while read -r file; do
     echo "Installed $source to $target"
 done
 
-echo "All files have been fetched and installed"
+echo "All files have been updated"
