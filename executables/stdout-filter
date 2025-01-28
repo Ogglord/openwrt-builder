@@ -13,17 +13,24 @@ GRAY='\033[0;90m'
 NC='\033[0m'
 
 # Parse command line arguments
-VERBOSE=false
+VERBOSE=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -v|--verbose)
-            VERBOSE=true
+        -vv)
+            VERBOSE=2
             shift
             ;;
-        -h|--help)
-            echo "Usage: stdout-filter [-v|--verbose] [-h|--help]"
-            echo "  -v, --verbose    Show all output including INFO and WARNING messages"
-            echo "  -h, --help       Show this help message"
+        -v)
+            VERBOSE=1
+            shift
+            ;;
+        -h)
+            echo "By default this filters everything except"
+            echo "high level directory changes and errors."
+            echo "Usage: stdout-filter [-v|-vv|-h]"
+            echo "  -v     Show warnings and all directory change messages"
+            echo "  -vv    No filter"
+            echo "  -h     Show this help message"
             exit 0
             ;;
         *)
@@ -38,7 +45,7 @@ while IFS= read -r line; do
     # Simplify paths
     line=$(echo "$line" | sed "s|$(pwd)/|./|g")
     
-    # Always show errors
+    # Always show errors and low-level make messages
     if [[ $line =~ ^[^\"]*[Ee]rror:.*$ ]] || [[ $line =~ ^[^\"]*ERROR:.*$ ]] || [[ $line =~ ^\[ERROR\] ]]; then
         echo -e "${RED}${line}${NC}"
         continue
@@ -46,14 +53,21 @@ while IFS= read -r line; do
         echo -e "${GREEN}${line}${NC}"
         continue
     fi
-    # Show other messages only in verbose mode
-    if $VERBOSE; then
-        
+
+    # Show warnings and high-level make messages in verbose mode
+    if [[ $VERBOSE -ge 1 ]]; then
         if [[ $line =~ make\[[4-9]\].*"Entering directory" ]]; then
             echo -e "${GRAY}${line}${NC}"
+            continue
         elif [[ $line =~ ^\[WARNING\] ]]; then
             echo -e "${YELLOW}${line}${NC}"
-        elif [[ $line =~ ^\[INFO\] ]]; then
+            continue
+        fi
+    fi
+
+    # Show INFO and other messages in extra verbose mode
+    if [[ $VERBOSE -eq 2 ]]; then
+        if [[ $line =~ ^\[INFO\] ]]; then
             echo -e "${GRAY}${line}${NC}"
         else
             echo "$line"
