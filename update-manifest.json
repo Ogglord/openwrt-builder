@@ -1,28 +1,28 @@
 {
   "files": [
     {
-      "source": "executables/buildo",
-      "target": "/usr/local/bin/buildo",
+      "source": "executables/owrt-build",
+      "target": "/usr/local/bin/owrt-build",
       "executable": true
     },
     {
-      "source": "executables/llvm-fix",
-      "target": "/usr/local/bin/llvm-fix",
+      "source": "executables/owrt-llvm-config",
+      "target": "/usr/local/bin/owrt-llvm-config",
       "executable": true
     },
     {
-      "source": "executables/stdout-filter",
-      "target": "/usr/local/bin/stdout-filter",
+      "source": "executables/owrt-log-filter",
+      "target": "/usr/local/bin/owrt-log-filter",
       "executable": true
     },
     {
-      "source": "executables/stdout-filter-test",
-      "target": "/usr/local/bin/stdout-filter-test",
+      "source": "executables/owrt-log-filter-test",
+      "target": "/usr/local/bin/owrt-log-filter-test",
       "executable": true
     },
     {
-      "source": "executables/fetch_executables_git",
-      "target": "/usr/local/bin/fetch_executables_git",
+      "source": "executables/owrt-update",
+      "target": "/usr/local/bin/owrt-update",
       "executable": true
     },
     {

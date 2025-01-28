@@ -20,14 +20,14 @@ LABEL com.github.containers.toolbox="true" \
 COPY ../scripts/setup-env.sh /
 COPY ../scripts/distrobox-shims.sh /
 COPY ../packages/openwrt-builder.packages /
-COPY ../executables/fetch_executables_git /fetch_executables_git.sh
+COPY ../executables/owrt-update /owrt-update.sh
 COPY ../update-manifest.json /
 
 # Set permissions and run setup
-RUN chmod +x /setup-env.sh /distrobox-shims.sh /fetch_executables_git.sh && \
+RUN chmod +x /setup-env.sh /distrobox-shims.sh /owrt-update.sh && \
     GO_VERSION=${GO_VERSION} DEBIAN_FRONTEND=${DEBIAN_FRONTEND} ARCH=${ARCH} /setup-env.sh && \
-    GIT_BRANCH=${GIT_BRANCH} /fetch_executables_git.sh && \
-    rm /setup-env.sh /distrobox-shims.sh /fetch_executables_git.sh /openwrt-builder.packages
+    GIT_BRANCH=${GIT_BRANCH} /owrt-update.sh && \
+    rm /setup-env.sh /distrobox-shims.sh /owrt-update.sh /openwrt-builder.packages
 
 # Copy fish config, justfile, bass plugin as final step
 COPY ../shell/config.fish /etc/fish/
