@@ -9,7 +9,9 @@ on:
       - main
     paths-ignore: # don't rebuild on documentation change or executables only
       - '**.md'
-      - './executables/**'
+      - './scripts/runtime/**'
+      - './config/**'      
+      - './distrobox.ini'
   schedule:
     - cron: '0 0 * * TUE'
 
