@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        containerfile: 
+        image-names: 
           - openwrt-builder
     steps:
       # Clone code to runner
@@ -42,9 +42,9 @@ jobs:
         id: meta
         with:
           images: |
-            ${{ matrix.containerfile }}
+            ${{ matrix.image-names }}
           labels: |
-            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/ublue-os/boxkit/main/README.md
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/main/README.md
 
       # Build image using Buildah action
       - name: Build Image
@@ -54,10 +54,10 @@ jobs:
           GIT_BRANCH: ${{ env.GIT_BRANCH }}
         with:
           containerfiles: |
-            ./ContainerFiles/${{ matrix.containerfile }}
+            Dockerfile
           build-args: |
             GIT_BRANCH=${{ env.GIT_BRANCH }}
-          image: ${{ matrix.containerfile }}
+          image: ${{ matrix.image-names }}
           tags: ${{ env.IMAGE_TAGS }}
           labels: ${{ steps.meta.outputs.labels }}
           oci: true
