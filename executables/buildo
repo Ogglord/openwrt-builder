@@ -173,6 +173,8 @@ usage() {
     echo "  world  - Build only                         build.log"
     echo "  debug  - Build (single thread verbose)      build_debug.log"
     echo "  feeds  - Update+Install Feeds only          feeds.log"
+    echo "  -----"
+    echo "  update - Self-update all helper executables from git"
     exit 1
 }
 
@@ -262,6 +264,19 @@ build() {
     esac
 }
 
+self_update() {
+    log "info" "Running self-update"
+    if [ ! -x "/usr/local/bin/fetch_executables_git" ]; then
+        log "error" "Update script not found at /usr/local/bin/fetch_executables_git"
+        exit 1
+    fi
+    
+    if ! { /usr/local/bin/fetch_executables_git 2>&1 }; then
+        log "error" "Self-update failed"
+        exit 1
+    fi
+}
+
 # Parse command-line arguments
 MODE="${1:-}"
 
@@ -273,7 +288,7 @@ if [ -z "$MODE" ]; then
 fi
 
 case "$MODE" in
-    all|world|debug|feeds)
+    all|world|debug|feeds|update)
         : # Valid mode
         ;;
     *)
@@ -303,6 +318,9 @@ case $MODE in
     feeds)
         update_install_feeds
     ;;
+    update)
+        self_update
+    ;;   
     *)
     log "error" "Invalid operation"
     exit 1

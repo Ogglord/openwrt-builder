@@ -79,13 +79,9 @@ jq -c '.files[]' "$MANIFEST_PATH" | while read -r file; do
         continue
     fi
     
-    # Handle self-update case
-    if [ "$target" = "/usr/local/bin/fetch_executables_git" ] && [ -f "$target" ]; then
-        mv "$TMP_DIR/$filename" "$TMP_DIR/${filename}.new"
-        mv "$TMP_DIR/${filename}.new" "$target"
-    else
-        mv "$TMP_DIR/$filename" "$target"
-    fi
+    # copy to destination
+    cp -f "$TMP_DIR/${filename}" "$target"
+   
     
     # Set executable permission if needed
     if [ "$is_executable" = "true" ]; then
@@ -95,4 +91,4 @@ jq -c '.files[]' "$MANIFEST_PATH" | while read -r file; do
     echo "Installed $source to $target"
 done
 
-echo "All files have been fetched and installed"
+echo "All files have been updated"
