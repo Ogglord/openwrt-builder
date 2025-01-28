@@ -28,6 +28,10 @@ apt-get update -y -qq
 grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y -qq
 touch /.packages_installed
 
+# Setup Distrobox shims
+./distrobox-shims.sh
+touch /.shims_installed
+
 # Install GO
 wget --quiet --ca-directory=/etc/ssl/certs/ https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz
 tar -C /usr/local -xzf go${GO_VERSION}.linux-${ARCH}.tar.gz
@@ -39,20 +43,25 @@ touch /.go_installed
 wget --quiet --ca-directory=/etc/ssl/certs/ https://apt.llvm.org/llvm.sh
 chmod +x llvm.sh
 ./llvm.sh "$LLVM_VERSION" > /dev/null
-llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)"
-echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/profile
+LLVM_HOST_PATH="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d' ' -f11)"
 touch /.llvm_installed
 
-# Setup Distrobox and tmux and justfile alias
-./distrobox-shims.sh
-touch /.shims_installed
-echo "export TMUX_TMPDIR=/var/tmp" >> /etc/profile
-echo "alias just='just --justfile /etc/just/justfile --unstable --working-directory .'" >> /etc/profile
+#Setup /etc/profile with alias and environment variables
+cat >> /etc/profile <<EOF
+export LLVM_HOST_PATH="$LLVM_HOST_PATH"
+alias just="just --justfile /etc/just/justfile --unstable --working-directory ."
+export TMUX_TMPDIR="/var/tmp"
+export DBX_CONTAINER_ALWAYS_PULL="1"
+export DBX_CONTAINER_IMAGE="ghcr.io/ogglord/openwrt-builder:latest"
+export DBX_CONTAINER_NAME="openwrt-builder"
+export DBX_CONTAINER_HOSTNAME="builder"
+export DBX_VERBOSE="1"
+EOF
 
 # Install just
 curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/bin
 
-# Configure system settings
+# Configure system settings to allow short password
 sed -i 's/obscure yescrypt/minlen=2 nullok/' /etc/pam.d/common-password
 
 # Cleanup
