@@ -7,6 +7,7 @@ if status is-interactive
     end
 
     alias just='just --justfile /etc/just/justfile --unstable --working-directory .'
+    alias build='/usr/local/bin/owrt-build'
 
     function fish_prompt
             ## modify the default 
