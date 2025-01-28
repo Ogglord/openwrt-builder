@@ -1,77 +1,122 @@
-# openwrt-builder
+# OpenWrt Builder
 
 [![build-boxkit](https://github.com/Ogglord/openwrt-builder/actions/workflows/build-boxkit.yml/badge.svg)](https://github.com/Ogglord/openwrt-builder/actions/workflows/build-boxkit.yml)
 [![release-please](https://github.com/Ogglord/openwrt-builder/actions/workflows/release-please.yml/badge.svg?event=push)](https://github.com/Ogglord/openwrt-builder/actions/workflows/release-please.yml)
 
-## What is openwrt-builder ?
-It's a docker container/OCI image built to be used with either distrobox or toolbox which allows you to compile OpenWrt from source with little effort.
+A containerized build environment for OpenWrt that simplifies the compilation process using Docker/Podman through Distrobox or Toolbox. This project provides a pre-configured Ubuntu-based container with all necessary build dependencies and helper scripts to streamline the OpenWrt compilation process.
 
-[Distrobox](https://github.com/89luca89/distrobox/) is a command-line tool that enables you to use any Linux distribution inside your terminal through containerization. It's a powerful tool that uses docker or podman to execute the container.
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Helper Scripts](#helper-scripts)
+  - [Quick Start Guide](#quick-start-guide)
+  - [Using distrobox.ini](#using-distroboxini)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+- [Further Reading](#further-reading)
 
-The image ([ghcr.io/ogglord/openwrt-builder](https://ghcr.io/ogglord/openwrt-builder)) contains Ubuntu with the usual build dependencies + llvm as well as an helper script ```owrt-builder``` that does very little except saves me from typing a lot of repetetive commands and injects the necessary LLVM lines to .config automatically (or use ```owrt-llvm-config``` standalone).
+## Features
+- Pre-configured Ubuntu-based build environment
+- Integrated LLVM toolchain support
+- Helper scripts for common build operations
+- Compatible with both Distrobox and Toolbox
+- Automatic home directory mounting
+- Fish shell support
 
-## Getting started
+## Prerequisites
+- Docker (recommended) or Podman installed
+- A compatible host OS:
+  - Any Linux distribution
+  - Windows with WSL2
+  - macOS (experimental, via `brew install distrobox`)
+- Sufficient disk space (at least 50GB recommended)
+- Minimum 8GB RAM recommended
 
-Requirements:
- 1. Docker or podman installed. I recommend Docker.
- 2. A compatible host OS, see [here](https://github.com/89luca89/distrobox/blob/main/docs/compatibility.md#host-distros) for a full list. TLDR; Any linux distro, WSL on Windows, MacOs might work but it's not officially supported (try ```brew install distrobox```)
+## Installation
 
-### 1. Install the either distrobox or toolbox. 
+### 1. Install Distrobox or Toolbox
 
-
-
+For Distrobox (recommended):
 ```bash
 curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sudo sh
 ```
-or read [here](https://github.com/89luca89/distrobox/?tab=readme-ov-file#installation) for more installation options.
+See [Distrobox installation options](https://github.com/89luca89/distrobox/?tab=readme-ov-file#installation) for alternatives.
 
-### 2. Create and enter the container
+### 2. Create and Enter the Container
 
-This will automatically pull the image and create the container (i.e. ```docker pull ghcr.io/ogglord/openwrt-builder```), it takes a few minutes the first time. It mounts your home directory to the containers home directory by default.
-
-If you use distrobox:
-
-    distrobox create -i ghcr.io/ogglord/openwrt-builder -n openwrt
-    distrobox enter openwrt
-    
-If you use toolbox:
-
-    toolbox create -i ghcr.io/ogglord/openwrt-builder -c openwrt
-    toolbox enter openwrt
-
-### 3. Build
-
-Do not copy this, run it line by line yourself from INSIDE the distrobox/toolbox environment(!)
-
+#### Using Distrobox:
 ```bash
-# I recommend using fish inside the distrobox
-$: chsh -s /usr/bin/fish
-$: fish
-$: mkdir ~/repos && cd ~/repos
-$: git clone https://github.com/pesa1234/openwrt.git
-$: cd openwrt
-$: git checkout <branch_name>
-$: git pull
-$: wget https://raw.githubusercontent.com/pesa1234/MT6000_cust_build/refs/heads/main/config_file/.config
-# add your packages etc
-$: make menuconfig
-# use owrt-build for an easier build process
-$: owrt-build
-# or do the steps yourselves using ./scripts/feeds and make e.g.:
-$: ./scripts/feeds update -a
-$: ./scripts/feeds install -a
-$: owrt-llvm-config # run this to inject the path to LLVM toolchain, important, this is done by buildo command
-$: make -j$(nproc) defconfig download clean world
+distrobox create -i ghcr.io/ogglord/openwrt-builder -n openwrt
+distrobox enter openwrt
 ```
 
-## Make it easier
-Copy the distrobox.ini to any folder, this allows you to type ```distrobox assemble create```to create the distrobox environment, and ```distrobox enter```to enter the environment when you are in that folder.
+#### Using Toolbox:
+```bash
+toolbox create -i ghcr.io/ogglord/openwrt-builder -c openwrt
+toolbox enter openwrt
+```
+
+## Usage
+
+### Helper Scripts
+The container includes several helper scripts to simplify the build process:
+
+- `owrt-build`: Automates the complete build process including feed updates and LLVM configuration
+- `owrt-llvm-config`: Injects the necessary LLVM toolchain paths into .config
+- `owrt-update`: Updates the OpenWrt source and feeds
+- `owrt-log-filter`: Filters build logs for better readability
+
+### Quick Start Guide
+
+Follow these steps inside the container:
+
+```bash
+# Switch to fish shell (recommended)
+chsh -s /usr/bin/fish
+fish
+
+# Set up build directory
+mkdir ~/repos && cd ~/repos
+git clone https://github.com/pesa1234/openwrt.git
+cd openwrt
+git checkout <branch_name>
+git pull
+
+# Get initial config
+wget https://raw.githubusercontent.com/pesa1234/MT6000_cust_build/refs/heads/main/config_file/.config
+
+# Customize your build
+make menuconfig
+
+# Build using helper script
+owrt-build
+
+# Or build manually:
+./scripts/feeds update -a
+./scripts/feeds install -a
+owrt-llvm-config
+make -j$(nproc) defconfig download clean world
+```
+
+### Using distrobox.ini
+
+For easier container management, you can use a distrobox.ini file:
+
+1. Download the template:
 ```bash
 wget https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/main/distrobox.ini
 ```
 
-The folder contains this, you can add your own packages if you like
+2. Create and enter the container in the same directory:
+```bash
+distrobox assemble create
+distrobox enter
+```
 
+Example distrobox.ini:
 ```ini
 [openwrt]
 image=ghcr.io/ogglord/openwrt-builder
@@ -84,9 +129,38 @@ start_now=true
 #additional_packages="ncdu"
 ```
 
+## Troubleshooting
 
-## Further reading / inspiration
+### Common Issues
 
- - https://openwrt.org/docs/guide-developer/toolchain/use-buildsystem
- - https://github.com/Fail-Safe/openwrt-pesa1234-build
+1. **Build Fails with Memory Error**
+   - Increase available memory or enable swap
+   - Reduce parallel jobs with `make -j1`
 
+2. **LLVM Configuration Issues**
+   - Run `owrt-llvm-config` before building
+   - Verify .config contains correct LLVM paths
+
+3. **Container Access Issues**
+   - Ensure Docker/Podman is running
+   - Check user permissions
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Further Reading
+
+- [OpenWrt Build System Documentation](https://openwrt.org/docs/guide-developer/toolchain/use-buildsystem)
+- [Distrobox Compatibility Guide](https://github.com/89luca89/distrobox/blob/main/docs/compatibility.md#host-distros)
+- [OpenWrt Custom Build Reference](https://github.com/Fail-Safe/openwrt-pesa1234-build)
