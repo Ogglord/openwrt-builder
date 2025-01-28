@@ -66,8 +66,8 @@ The container includes several helper scripts to simplify the build process:
 
 - `owrt-build`: Automates the complete build process including feed updates and LLVM configuration
 - `owrt-llvm-config`: Injects the necessary LLVM toolchain paths into .config
-- `owrt-update`: Updates the OpenWrt source and feeds
-- `owrt-log-filter`: Filters build logs for better readability
+- `owrt-update`: Updates the helper scripts from latest git
+- `owrt-log-filter`: Filters make output for better readability
 
 ### Quick Start Guide
 
