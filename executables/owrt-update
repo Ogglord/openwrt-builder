@@ -1,28 +1,22 @@
 #!/bin/bash
 
-# Check if running as root or with sudo
 if [ "$EUID" -ne 0 ]; then
     echo "This script must be run as root or with sudo"
     exit 1
 fi
 
-# Set branch from: GIT_BRANCH env var, then 1st argument, then default to main
 BRANCH=${GIT_BRANCH:-${1:-main}}
-
-# Base URL for raw GitHub content
-BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/$BRANCH"
-
-# Create temp directory
+REPO_URL="https://github.com/Ogglord/openwrt-builder.git"
 TMP_DIR=$(mktemp -d)
+REPO_DIR="$TMP_DIR/update"
+
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# Check if jq is available
 if ! command -v jq >/dev/null 2>&1; then
     echo "Error: jq is required but not installed"
     exit 1
 fi
 
-# Function to validate JSON
 validate_json() {
     if jq empty "$1" 2>/dev/null; then
         return 0
@@ -31,59 +25,41 @@ validate_json() {
     fi
 }
 
-# Download and parse manifest
-echo "Fetching update manifest from $BRANCH branch..."
-MANIFEST_PATH="$TMP_DIR/update-manifest.json"
-LOCAL_MANIFEST="/update-manifest.json"
+echo "Cloning repository from $BRANCH branch..."
+if ! git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$REPO_DIR"; then
+    echo "Failed to clone repository"
+    exit 1
+fi
 
-# Try to download manifest
-if curl -sS -L -f "$BASE_URL/update-manifest.json" -o "$MANIFEST_PATH"; then
-    if ! validate_json "$MANIFEST_PATH"; then
-        echo "Downloaded manifest is not valid JSON"
-        if [ -f "$LOCAL_MANIFEST" ]; then
-            echo "Falling back to local manifest..."
-            cp "$LOCAL_MANIFEST" "$MANIFEST_PATH"
-        else
-            echo "No valid manifest found"
-            exit 1
-        fi
-    fi
-else
-    echo "Failed to download manifest from $BRANCH branch"
-    if [ -f "$LOCAL_MANIFEST" ]; then
+MANIFEST_GIT="$REPO_DIR/update-manifest.json"
+MANIFEST_LOCAL="/update-manifest.json"
+
+if [ ! -f "$MANIFEST_GIT" ]; then
+    echo "No manifest in repository"
+    if [ -f "$MANIFEST_LOCAL" ]; then
         echo "Falling back to local manifest..."
-        cp "$LOCAL_MANIFEST" "$MANIFEST_PATH"
+        cp "$MANIFEST_LOCAL" "$MANIFEST_GIT"
     else
-        echo "No local manifest found"
+        echo "No manifest found"
         exit 1
     fi
 fi
 
-# Process each file in the manifest
 echo "Processing updates from manifest..."
-jq -c '.files[]' "$MANIFEST_PATH" | while read -r file; do
+jq -c '.files[]' "$MANIFEST_GIT" | while read -r file; do
     source=$(echo "$file" | jq -r '.source')
     target=$(echo "$file" | jq -r '.target')
     is_executable=$(echo "$file" | jq -r '.executable')
     
-    echo "Fetching $source..."
+    echo "Processing $source..."
     
     # Create target directory if it doesn't exist
     target_dir=$(dirname "$target")
     mkdir -p "$target_dir"
     
-    # Download to temp directory first
-    filename=$(basename "$source")
-    if ! curl -sS -L -f "$BASE_URL/$source" -o "$TMP_DIR/$filename"; then
-        echo "Failed to download $source"
-        continue
-    fi
+    # Copy from local repo
+    cp -f "$REPO_DIR/$source" "$target"
     
-    # copy to destination
-    cp -f "$TMP_DIR/${filename}" "$target"
-   
-    
-    # Set executable permission if needed
     if [ "$is_executable" = "true" ]; then
         chmod +x "$target"
     fi
