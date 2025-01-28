@@ -44,6 +44,11 @@
       "source": "config/functions/bass.fish",
       "target": "/etc/fish/functions/bass.fish",
       "executable": false
+    },
+    {
+      "source": "config/completions/owrt-build.fish",
+      "target": "/etc/fish/completions/owrt-build.fish",
+      "executable": false
     }
   ]
 }
