@@ -1,4 +1,4 @@
-# OpenWrt Build Helper Justfile
+# OpenWrt Build Helper Justfile (an alternative to owrt-build)
 # Version: 0.3
 # Author: github.com/Ogglord
 
@@ -13,7 +13,8 @@ remove_apps := "audit busybox kexec-tools lldpd policycoreutils"
 
 # Show available recipes
 @default:
-    echo "OpenWrt Builder v0.3"
+    echo "OpenWrt Justfile Builder v0.3"
+    echo "An alternative to owrt-build/build"
     echo "-------------------"
     echo "Commands:"
     echo "  just feeds       - update feeds only"   
@@ -46,20 +47,20 @@ build-all: llvm-fix update_feeds
     make download
     make defconfig
     make clean
-    make -j {{jobs}} {{extra_make_flags}} world
+    make -j {{jobs}} {{extra_make_flags}} world | owrt-log-filter -v
 
 
 build: llvm-fix
     make defconfig
-    make -j {{jobs}} {{make_flags}} world
+    make -j {{jobs}} {{make_flags}} world | owrt-log-filter -v
 
 
 debug: llvm-fix
     make defconfig
-    make -j1 V=s {{extra_make_flags}} world
+    make -j1 V=s {{extra_make_flags}} world | owrt-log-filter -vv
 
 [no-cd]
 [script("/bin/bash")]
 llvm-fix:
-  echo "Invoking /usr/local/bin/llvm-fix"
-  exec /usr/local/bin/llvm-fix
+  echo "Invoking /usr/local/bin/owrt-llvm-config"
+  exec /usr/local/bin/owrt-llvm-config
