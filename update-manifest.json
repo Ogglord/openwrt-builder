@@ -1,33 +1,48 @@
 {
   "files": [
     {
-      "source": "executables/owrt-build",
+      "source": "scripts/runtime/owrt-build",
       "target": "/usr/local/bin/owrt-build",
       "executable": true
     },
     {
-      "source": "executables/owrt-llvm-config",
+      "source": "scripts/runtime/owrt-llvm-config",
       "target": "/usr/local/bin/owrt-llvm-config",
       "executable": true
     },
     {
-      "source": "executables/owrt-log-filter",
+      "source": "scripts/runtime/owrt-log-filter",
       "target": "/usr/local/bin/owrt-log-filter",
       "executable": true
     },
     {
-      "source": "executables/owrt-log-filter-test",
+      "source": "scripts/runtime/owrt-log-filter-test",
       "target": "/usr/local/bin/owrt-log-filter-test",
       "executable": true
     },
     {
-      "source": "executables/owrt-update",
+      "source": "scripts/runtime/owrt-update",
       "target": "/usr/local/bin/owrt-update",
       "executable": true
     },
     {
-      "source": "shell/justfile",
+      "source": "config/justfile",
       "target": "/etc/just/justfile",
+      "executable": false
+    },
+    {
+      "source": "config/config.fish",
+      "target": "/etc/fish/config.fish",
+      "executable": false
+    },
+    {
+      "source": "config/functions/__bass.py",
+      "target": "/etc/fish/functions/__bass.py",
+      "executable": false
+    },
+    {
+      "source": "config/functions/bass.fish",
+      "target": "/etc/fish/functions/bass.fish",
       "executable": false
     }
   ]

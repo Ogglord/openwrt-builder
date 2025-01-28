@@ -43,10 +43,11 @@ llvm_host_path="/usr/lib/$(ls /usr/lib/ | grep llvm | sort -r | head -1 | cut -d
 echo "export LLVM_HOST_PATH=$llvm_host_path" >> /etc/profile
 touch /.llvm_installed
 
-# Setup Distrobox and tmux
+# Setup Distrobox and tmux and justfile alias
 ./distrobox-shims.sh
 touch /.shims_installed
 echo "export TMUX_TMPDIR=/var/tmp" >> /etc/profile
+echo "alias just='just --justfile /etc/just/justfile --unstable --working-directory .'" >> /etc/profile
 
 # Install just
 curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/bin

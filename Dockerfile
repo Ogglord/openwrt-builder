@@ -17,20 +17,17 @@ LABEL com.github.containers.toolbox="true" \
       branch=${GIT_BRANCH}
 
 # Copy files to their final destinations
-COPY ../scripts/setup-env.sh /
-COPY ../scripts/distrobox-shims.sh /
-COPY ../packages/openwrt-builder.packages /
-COPY ../executables/owrt-update /owrt-update.sh
-COPY ../update-manifest.json /
+COPY ./scripts/buildtime/ /
+COPY ./packages/openwrt-builder.packages /
+COPY ./scripts/runtime/owrt-update /
+COPY ./update-manifest.json /
 
-# Set permissions and run setup
-RUN chmod +x /setup-env.sh /distrobox-shims.sh /owrt-update.sh && \
-    GO_VERSION=${GO_VERSION} DEBIAN_FRONTEND=${DEBIAN_FRONTEND} ARCH=${ARCH} /setup-env.sh && \
-    GIT_BRANCH=${GIT_BRANCH} OWRT_UPDATE_TEMP=1 /owrt-update.sh && \
-    rm /setup-env.sh /distrobox-shims.sh /owrt-update.sh /openwrt-builder.packages
+# Set permissions and run setup script, install runtime helpers and finally cleanup
+RUN chmod +x /container-setup.sh /distrobox-shims.sh /owrt-update && \
+    GO_VERSION=${GO_VERSION} DEBIAN_FRONTEND=${DEBIAN_FRONTEND} ARCH=${ARCH} /container-setup.sh && \
+    GIT_BRANCH=${GIT_BRANCH} OWRT_UPDATE_TEMP=1 /owrt-update && \
+    rm /container-setup.sh /distrobox-shims.sh /owrt-update /openwrt-builder.packages
 
 # Copy fish config, justfile, bass plugin as final step
-COPY ../shell/config.fish /etc/fish/
-COPY ../shell/bass/ /etc/fish/functions/
-RUN chmod 644 /etc/fish/functions/__bass.py /etc/fish/functions/bass.fish && \
-     echo "alias just='just --justfile /etc/just/justfile --unstable --working-directory .'" >> /etc/profile
+#RUN chmod 644 /etc/fish/functions/__bass.py /etc/fish/functions/bass.fish && \
+    
