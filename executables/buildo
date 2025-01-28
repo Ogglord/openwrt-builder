@@ -82,9 +82,9 @@ Version: 0.4.1
 Usage: $0 <mode>
 
 Modes:                                      | Log file:
-  all    - Update+Install Feeds               feeds.log
-          Download,                           download.log +
-          Build                               build.log
+  all    - Update+Install Feeds               feeds.log    +
+           Download,                          download.log +
+           Build                              build.log
   world  - Build only                         build.log
   debug  - Build (single thread verbose)      build_debug.log
   feeds  - Update+Install Feeds only          feeds.log
