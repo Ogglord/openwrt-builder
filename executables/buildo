@@ -271,7 +271,7 @@ self_update() {
         exit 1
     fi
     
-    if ! { /usr/local/bin/fetch_executables_git 2>&1 }; then
+    if ! { /usr/local/bin/fetch_executables_git }; then
         log "error" "Self-update failed"
         exit 1
     fi
