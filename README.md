@@ -112,13 +112,13 @@ wget https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/main/d
 
 2. Create and enter the container in the same directory:
 ```bash
-distrobox assemble create
-distrobox enter
+distrobox assemble create && distrobox enter builder
 ```
 
 Example distrobox.ini:
 ```ini
-[openwrt]
+[builder]
+hostname=builder
 image=ghcr.io/ogglord/openwrt-builder
 init=false
 nvidia=false
@@ -126,7 +126,7 @@ pull=true
 root=false
 replace=true
 start_now=true
-#additional_packages="ncdu"
+#additional_packages=""
 ```
 
 ## Troubleshooting
