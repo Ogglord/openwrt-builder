@@ -136,7 +136,16 @@ build() {
     
     log "info" "Building OpenWrt${MODE:+ ($MODE mode)}"
     $build_cmd 2>&1 | tee "$log_file" | "$LOG_FILTER" || { log "error" "Build failed - see $log_file"; exit 1; }
-    log "info" "Build complete - logs: $log_file"
+    echo -e "${GREEN}"
+    cat << 'EOF'
+     ____  _   _  ____ ____ _____ ____ ____  _ 
+    / ___|| | | |/ ___/ ___| ____/ ___/ ___|| |
+    \___ \| | | | |  | |   |  _| \___ \___ \| |
+     ___) | |_| | |__| |___| |___ ___) |__) |_|
+    |____/ \___/ \____\____|_____|____/____/(_)
+EOF
+    echo "${NC}"
+    log "info" "Build complete - Log files can be found in: $LOG_DIR"
 }
 
 self_update() {
