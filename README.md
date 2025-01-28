@@ -91,8 +91,8 @@ wget https://raw.githubusercontent.com/pesa1234/MT6000_cust_build/refs/heads/mai
 # Customize your build
 make menuconfig
 
-# Build using helper script
-owrt-build
+# Build everything, including feeds etc using helper script
+owrt-build all
 
 # Or build manually:
 ./scripts/feeds update -a
