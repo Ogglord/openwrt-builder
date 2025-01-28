@@ -10,7 +10,8 @@ fi
 BRANCH=${1:-${GIT_BRANCH:-main}}
 
 # Base URL for raw GitHub content
-BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/$BRANCH"
+#         https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/dev/executables/buildo
+BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/$BRANCH"
 
 # Create temp directory
 TMP_DIR=$(mktemp -d)
