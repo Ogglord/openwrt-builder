@@ -10,7 +10,6 @@ fi
 BRANCH=${GIT_BRANCH:-${1:-main}}
 
 # Base URL for raw GitHub content
-#         https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/dev/executables/buildo
 BASE_URL="https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/$BRANCH"
 
 # Create temp directory
