@@ -6,8 +6,8 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Set branch from: 1st argument, then GIT_BRANCH env var, then default to main
-BRANCH=${1:-${GIT_BRANCH:-main}}
+# Set branch from: GIT_BRANCH env var, then 1st argument, then default to main
+BRANCH=${GIT_BRANCH:-${1:-main}}
 
 # Base URL for raw GitHub content
 #         https://raw.githubusercontent.com/Ogglord/openwrt-builder/refs/heads/dev/executables/buildo
