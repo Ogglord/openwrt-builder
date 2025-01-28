@@ -25,11 +25,11 @@ if status is-interactive
         set_color normal
         echo "--"
         set_color --bold yellow
-        echo -n "Use ´buildo´"
+        echo -n "Use ´build´ or ´owrt-build´"
         set_color normal
         echo " to invoke the OpenWrt build helper"
         set_color --bold yellow
-        echo -n "Use ´llvm-fix´"
+        echo -n "Write ´owrt-llvm-config´"
         set_color normal
         echo " to update the .config to use the LLVM toolchain"
         echo "--"
