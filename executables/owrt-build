@@ -116,8 +116,8 @@ download_apps() {
 
 run_llvm_fix() {
     log "info" "Configuring LLVM toolchain"
-    [ ! -x "/usr/local/bin/llvm-fix" ] && { log "error" "LLVM fix script not found"; exit 1; }
-    /usr/local/bin/llvm-fix 2>&1 | tee "$LOG_DIR/llvm_fix.log" | "$LOG_FILTER" || { log "error" "LLVM fix failed"; exit 1; }
+    [ ! -x "/usr/local/bin/owrt-llvm-config" ] && { log "error" "LLVM fix script not found"; exit 1; }
+    /usr/local/bin/owrt-llvm-config 2>&1 | tee "$LOG_DIR/owrt-llvm-config.log" | "$LOG_FILTER" || { log "error" "LLVM fix failed"; exit 1; }
 }
 
 build() {
@@ -141,8 +141,8 @@ build() {
 
 self_update() {
     log "info" "Running self-update using sudo"
-    [ ! -x "/usr/local/bin/fetch_executables_git" ] && { log "error" "Update script not found"; exit 1; }
-    sudo /usr/local/bin/fetch_executables_git || { log "error" "Self-update failed"; exit 1; }
+    [ ! -x "/usr/local/bin/owrt-update" ] && { log "error" "Update script not found"; exit 1; }
+    sudo /usr/local/bin/owrt-update || { log "error" "Self-update failed"; exit 1; }
 }
 
 # Main execution
