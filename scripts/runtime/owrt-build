@@ -144,7 +144,6 @@ build() {
      ___) | |_| | |__| |___| |___ ___) |__) |_|
     |____/ \___/ \____\____|_____|____/____/(_)
 EOF
-    echo "${NC}"
     log "info" "Build complete - Log files can be found in: $LOG_DIR"
 }
 
