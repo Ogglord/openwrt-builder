@@ -12,13 +12,15 @@ YELLOW='\033[1;33m'
 GRAY='\033[0;90m'
 NC='\033[0m'
 
+LOG_ARGS="-v"
+
 # Find the stdout-filter executable
 if command -v owrt-log-filter >/dev/null 2>&1; then
-    LOG_FILTER="owrt-log-filter"
+    LOG_FILTER="owrt-log-filter ${LOG_ARGS}"
 else
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [ -x "$SCRIPT_DIR/owrt-log-filter" ]; then
-        LOG_FILTER="$SCRIPT_DIR/owrt-log-filter"
+        LOG_FILTER="$SCRIPT_DIR/owrt-log-filter ${LOG_ARGS}"
     else
         echo -e "${RED}[ERROR]${NC} ${GRAY}owrt-log-filter${NC} executable not found in PATH or in $SCRIPT_DIR" >&2
         exit 1
