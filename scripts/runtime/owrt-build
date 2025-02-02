@@ -16,18 +16,16 @@ LOG_ARGS="-v"
 
 # Find the stdout-filter executable
 if command -v owrt-log-filter >/dev/null 2>&1; then
-    LOG_FILTER="owrt-log-filter ${LOG_ARGS}"
+    LOG_FILTER="owrt-log-filter"
 else
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [ -x "$SCRIPT_DIR/owrt-log-filter" ]; then
-        LOG_FILTER="$SCRIPT_DIR/owrt-log-filter ${LOG_ARGS}"
+        LOG_FILTER="$SCRIPT_DIR/owrt-log-filter"
     else
         echo -e "${RED}[ERROR]${NC} ${GRAY}owrt-log-filter${NC} executable not found in PATH or in $SCRIPT_DIR" >&2
         exit 1
     fi
 fi
-
-LOG_FILTER_VERBOSE="${LOG_FILTER}vv"
 
 # Logging configuration
 LOG_DIR="./build_logs"
@@ -77,7 +75,7 @@ check_dependencies() {
     done
 }
 
-# Function to display usage
+# Function to display usage information
 usage() {
     cat << EOF
 OpenWrt Build Helper Script
@@ -97,38 +95,38 @@ Modes:                                      | Log file:
 EOF
     exit 1
 }
-
+ 
 update_install_feeds() {
     local REMOVE_APPS="audit busybox kexec-tools lldpd policycoreutils"
     
     log "info" "Updating feeds"
-    ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log" | "$LOG_FILTER" || { log "error" "Feed update failed"; exit 1; }
-    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" || { log "error" "Feed installation failed"; exit 1; }
+    ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Feed update failed"; exit 1; }
+    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Feed installation failed"; exit 1; }
     
     log "info" "Reinstalling problematic packages"
-    ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" || log "warning" "Package uninstall incomplete - continuing"
-    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" || { log "error" "Feed reinstallation failed"; exit 1; }
+    ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || log "warning" "Package uninstall incomplete - continuing"
+    ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Feed reinstallation failed"; exit 1; }
     
     log "info" "Feeds updated - logs: $LOG_DIR/feeds.log"
 }
 
 download_apps() {
     log "info" "Downloading packages"
-    make -j1 download 2>&1 | tee "$LOG_DIR/download.log" | "${LOG_FILTER_VERBOSE}" || { log "error" "Package download failed"; exit 1; }
+    make -j1 download 2>&1 | tee "$LOG_DIR/download.log" | "${LOG_FILTER}" -vv || { log "error" "Package download failed"; exit 1; }
     log "info" "Downloads complete - logs: $LOG_DIR/download.log"
 }
 
 run_llvm_fix() {
     log "info" "Configuring LLVM toolchain"
     [ ! -x "/usr/local/bin/owrt-llvm-config" ] && { log "error" "LLVM fix script not found"; exit 1; }
-    /usr/local/bin/owrt-llvm-config 2>&1 | tee "$LOG_DIR/owrt-llvm-config.log" | "$LOG_FILTER" || { log "error" "LLVM fix failed"; exit 1; }
+    /usr/local/bin/owrt-llvm-config 2>&1 | tee "$LOG_DIR/owrt-llvm-config.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "LLVM fix failed"; exit 1; }
 }
 
 build() {
     run_llvm_fix
     
     log "info" "Running defconfig"
-    make defconfig 2>&1 | tee "$LOG_DIR/defconfig.log" | "$LOG_FILTER" || { log "error" "defconfig failed"; exit 1; }
+    make defconfig 2>&1 | tee "$LOG_DIR/defconfig.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "defconfig failed"; exit 1; }
     
     local log_file="$LOG_DIR/build.log"
     local build_cmd="make -j$(($(nproc)+1)) V=s world"
@@ -139,7 +137,7 @@ build() {
     fi
     
     log "info" "Building OpenWrt${MODE:+ ($MODE mode)}"
-    $build_cmd 2>&1 | tee "$log_file" | "$LOG_FILTER" || { log "error" "Build failed - see $log_file"; exit 1; }
+    $build_cmd 2>&1 | tee "$log_file" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Build failed - see $log_file"; exit 1; }
     echo -e "${GREEN}"
     cat << 'EOF'
      ____  _   _  ____ ____ _____ ____ ____  _ 
