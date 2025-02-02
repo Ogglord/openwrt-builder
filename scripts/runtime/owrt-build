@@ -27,6 +27,8 @@ else
     fi
 fi
 
+LOG_FILTER_VERBOSE="${LOG_FILTER}vv"
+
 # Logging configuration
 LOG_DIR="./build_logs"
 mkdir -p "$LOG_DIR" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Cannot create log directory: $LOG_DIR" >&2; exit 1; }
@@ -112,7 +114,7 @@ update_install_feeds() {
 
 download_apps() {
     log "info" "Downloading packages"
-    make -j1 download 2>&1 | tee "$LOG_DIR/download.log" | "$LOG_FILTER" || { log "error" "Package download failed"; exit 1; }
+    make -j1 download 2>&1 | tee "$LOG_DIR/download.log" | "${LOG_FILTER_VERBOSE}" || { log "error" "Package download failed"; exit 1; }
     log "info" "Downloads complete - logs: $LOG_DIR/download.log"
 }
 
