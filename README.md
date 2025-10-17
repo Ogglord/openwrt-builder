@@ -82,6 +82,8 @@ fish
 mkdir ~/repos && cd ~/repos
 git clone https://github.com/pesa1234/openwrt.git
 cd openwrt
+# list the last 10 branches
+git for-each-ref --sort=-committerdate --count=10 refs/heads refs/remotes --format='%(committerdate:short) %(refname:short)'
 git checkout <branch_name>
 git pull
 
