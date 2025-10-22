@@ -56,7 +56,15 @@ export DBX_CONTAINER_IMAGE="ghcr.io/ogglord/openwrt-builder:latest"
 export DBX_CONTAINER_NAME="openwrt-builder"
 export DBX_CONTAINER_HOSTNAME="builder"
 export DBX_VERBOSE="1"
+alias build="owrt-builder"
 EOF
+
+# Create environment setup script
+RUN echo '#!/bin/bash\n\
+export USE_CCACHE=1\n\
+export CCACHE_DIR="${CCACHE_DIR:-$HOME/.cache/ccache}"\n\
+export CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-50G}"\n\
+' > /etc/profile.d/ccache.sh && chmod +x /etc/profile.d/ccache.sh
 
 # Install just
 #curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/bin
