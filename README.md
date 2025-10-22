@@ -73,6 +73,8 @@ The container includes several helper scripts to simplify the build process:
 
 Follow these steps inside the container:
 
+Remember to not run "make defconfig" before updating/installing feeds, that will mess up the .config
+
 ```bash
 # Switch to fish shell (recommended)
 chsh -s /usr/bin/fish
@@ -89,9 +91,6 @@ git pull
 
 # Get initial config
 wget https://raw.githubusercontent.com/pesa1234/MT6000_cust_build/refs/heads/main/config_file/.config
-
-# Customize your build
-make menuconfig
 
 # Build everything, including feeds etc using helper script
 owrt-build all
