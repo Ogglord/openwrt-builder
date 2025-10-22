@@ -4,6 +4,7 @@ bison
 build-essential
 bzip2
 ca-certificates
+ccache
 curl
 dialog
 diffutils
@@ -41,7 +42,7 @@ libvte-2.9*-common
 libvte-common
 libvulkan1
 locales
-lsb-release 
+lsb-release
 lsof
 man-db
 manpages
