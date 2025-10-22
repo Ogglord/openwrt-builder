@@ -28,10 +28,10 @@ log() {
     local level="$1"
     local message="$2"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
+
     # Always log to file
     echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
-    
+
     # Conditionally print to console based on verbosity
     if [[ "$VERBOSE" == "true" ]] || [[ "$level" == "ERROR" ]]; then
         echo "[$level] $message" >&2
@@ -41,12 +41,12 @@ log() {
 # Cleanup function to ensure proper directory restoration
 cleanup() {
     local exit_code=$?
-    
+
     # Attempt to return to original directory if we changed directories
     if [ -n "${ORIGINAL_DIR:-}" ]; then
         cd "$ORIGINAL_DIR"
     fi
-    
+
     log "INFO" "Script exiting with status $exit_code"
     exit $exit_code
 }
@@ -65,21 +65,21 @@ log "INFO" "========================================================="
 # Check for broken symlinks in staging directory
 check_staging_symlinks() {
     local staging_dir="./staging_dir/host/bin"
-    
+
     if [ ! -d "$staging_dir" ]; then
         log "WARN" "Staging directory does not exist: $staging_dir"
         return 0
     fi
-    
+
     cd "$staging_dir"
-    
+
     # Find and report broken symlinks
     local broken_links
     if ! broken_links=$(find . -xtype l -print); then
         log "ERROR" "Failed to search for symlinks"
         return 1
     fi
-    
+
     if [ -n "$broken_links" ]; then
         log "ERROR" "Broken symlinks detected:"
         echo "$broken_links" | while read -r link; do
@@ -91,6 +91,29 @@ check_staging_symlinks() {
     fi
 }
 
+configure_ccache_toolchain() {
+
+    local config_file="$ORIGINAL_DIR/.config"
+    if [ ! -e "$config_file" ]; then
+        log "WARN" "Configuration file missing: $config_file"
+        return 0
+    fi
+
+    if [ "${USE_CCACHE:-0}" != "1" ]; then
+        log "WARN" "Ccache is not enabled"
+        return 0
+    fi
+
+    if grep -q "^CONFIG_CCACHE=y" "$config_file"; then
+        log "INFO" "ccache already enabled"
+        return 0
+    fi
+
+    sed -i '/^# CONFIG_CCACHE is not set/d; /^CONFIG_CCACHE=/d' "$config_file"
+    echo "CONFIG_CCACHE=y" >> "$config_file"
+    log "INFO" "✓ Enabled ccache"
+}
+
 # Configure LLVM toolchain settings
 configure_llvm_toolchain() {
     # Validate LLVM_HOST_PATH
@@ -98,19 +121,19 @@ configure_llvm_toolchain() {
         log "ERROR" "LLVM_HOST_PATH is not set or is empty"
         return 1
     fi
-    
+
     local config_file="$ORIGINAL_DIR/.config"
     if [ ! -e "$config_file" ]; then
         log "WARN" "Configuration file missing: $config_file"
         return 0
     fi
-    
+
     # Unset BPF toolchain build flag
     if grep -q "CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y" "$config_file"; then
         log "INFO" "Unsetting CONFIG_BPF_TOOLCHAIN_BUILD_LLVM"
         sed -i -e 's|CONFIG_BPF_TOOLCHAIN_BUILD_LLVM=y|# CONFIG_BPF_TOOLCHAIN_BUILD_LLVM is not set|' "$config_file"
     fi
-    
+
     # Handle LLVM host path configuration
     if grep -q "CONFIG_BPF_TOOLCHAIN_HOST_PATH" "$config_file"; then
         log "INFO" "Updating existing LLVM host path"
@@ -129,8 +152,9 @@ configure_llvm_toolchain() {
 main() {
     check_staging_symlinks
     configure_llvm_toolchain
-    
-    log "INFO" "OpenWrt fixes applied successfully"
+    configure_ccache_toolchain
+
+    log "INFO" "OpenWrt .config adjusted successfully"
 }
 
 # Run main script

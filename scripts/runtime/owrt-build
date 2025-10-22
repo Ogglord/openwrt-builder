@@ -13,6 +13,17 @@ GRAY='\033[0;90m'
 NC='\033[0m'
 
 LOG_ARGS="-v"
+MAKE_COMMANDS=""
+
+# Create ccache directory on host
+mkdir -p ~/.cache/ccache
+
+# Set environment variables
+export CCACHE_DIR=~/.cache/ccache
+export USE_CCACHE=1
+export CCACHE_MAXSIZE=50G  # Adjust based on available space
+
+echo "ccache directory: $CCACHE_DIR"
 
 # Find the stdout-filter executable
 if command -v owrt-log-filter >/dev/null 2>&1; then
@@ -36,14 +47,14 @@ log() {
     local level="$1"
     local message="$2"
     local log_file="${LOG_DIR}/${level}.log"
-    
+
     case "$level" in
         "error") echo -e "${RED}[ERROR]${NC} $message" >&2 ;;
         "warning") echo -e "${YELLOW}[WARNING]${NC} $message" >&2 ;;
         "info") echo -e "${GREEN}[INFO]${NC} $message" ;;
         *) echo "$message" ;;
     esac
-    
+
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $level: $message" >> "$log_file"
 }
 
@@ -51,15 +62,15 @@ log() {
 check_openwrt_source() {
     local required_dirs=("scripts" "package" "target" "toolchain")
     local required_files=("Makefile" "scripts/feeds")
-    
+
     for dir in "${required_dirs[@]}"; do
         [ ! -d "$dir" ] && log "error" "Missing directory: $dir" && return 1
     done
-    
+
     for file in "${required_files[@]}"; do
         [ ! -f "$file" ] && log "error" "Missing file: $file" && return 1
     done
-    
+
     log "info" "Source directory valid"
     return 0
 }
@@ -95,18 +106,18 @@ Modes:                                      | Log file:
 EOF
     exit 1
 }
- 
+
 update_install_feeds() {
     local REMOVE_APPS="audit busybox kexec-tools lldpd policycoreutils"
-    
+
     log "info" "Updating feeds"
     ./scripts/feeds update -a 2>&1 | tee "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Feed update failed"; exit 1; }
     ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Feed installation failed"; exit 1; }
-    
+
     log "info" "Reinstalling problematic packages"
     ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || log "warning" "Package uninstall incomplete - continuing"
     ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Feed reinstallation failed"; exit 1; }
-    
+
     log "info" "Feeds updated - logs: $LOG_DIR/feeds.log"
 }
 
@@ -124,29 +135,32 @@ run_llvm_fix() {
 
 build() {
     run_llvm_fix
-    
+
     log "info" "Running defconfig"
     make defconfig 2>&1 | tee "$LOG_DIR/defconfig.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "defconfig failed"; exit 1; }
-    
+
+    ccache -z  # Zero stats
     local log_file="$LOG_DIR/build.log"
     local build_cmd="make -j$(($(nproc)+1)) V=s world"
-    
+
     if [ "$MODE" = "debug" ]; then
         log_file="$LOG_DIR/build_debug.log"
         build_cmd="make -j1 V=s world"
     fi
-    
+
     log "info" "Building OpenWrt${MODE:+ ($MODE mode)}"
     $build_cmd 2>&1 | tee "$log_file" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Build failed - see $log_file"; exit 1; }
     echo -e "${GREEN}"
     cat << 'EOF'
-     ____  _   _  ____ ____ _____ ____ ____  _ 
+     ____  _   _  ____ ____ _____ ____ ____  _
     / ___|| | | |/ ___/ ___| ____/ ___/ ___|| |
     \___ \| | | | |  | |   |  _| \___ \___ \| |
      ___) | |_| | |__| |___| |___ ___) |__) |_|
     |____/ \___/ \____\____|_____|____/____/(_)
 EOF
     log "info" "Build complete - Log files can be found in: $LOG_DIR"
+
+    ccache -s  # Should show hits/misses
 }
 
 self_update() {
