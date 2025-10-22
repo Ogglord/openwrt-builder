@@ -1,4 +1,5 @@
 bash-completion
+bat
 bc
 bison
 build-essential
@@ -8,6 +9,7 @@ ccache
 curl
 dialog
 diffutils
+eza
 file
 findutils
 fish
@@ -73,3 +75,4 @@ xz-utils
 zip
 zlib1g-dev
 zstd
+zoxide
