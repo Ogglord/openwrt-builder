@@ -39,7 +39,7 @@ else
 fi
 
 # Logging configuration
-LOG_DIR="./build_logs"
+LOG_DIR="../build_logs"
 mkdir -p "$LOG_DIR" 2>/dev/null || { echo -e "${RED}[ERROR]${NC} Cannot create log directory: $LOG_DIR" >&2; exit 1; }
 
 # Logging function
@@ -90,7 +90,7 @@ check_dependencies() {
 usage() {
     cat << EOF
 OpenWrt Build Helper Script
-Version: 0.4.1
+Version: 0.4.5
 
 Usage: $0 <mode>
 
@@ -118,13 +118,13 @@ update_install_feeds() {
     ./scripts/feeds uninstall $REMOVE_APPS 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || log "warning" "Package uninstall incomplete - continuing"
     ./scripts/feeds install -a 2>&1 | tee -a "$LOG_DIR/feeds.log" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Feed reinstallation failed"; exit 1; }
 
-    log "info" "Feeds updated - logs: $LOG_DIR/feeds.log"
+    log "info" "Feeds updated - logs: $(realpath "$LOG_DIR")/feeds.log"
 }
 
 download_apps() {
     log "info" "Downloading packages"
     make -j1 download 2>&1 | tee "$LOG_DIR/download.log" | "${LOG_FILTER}" -vv || { log "error" "Package download failed"; exit 1; }
-    log "info" "Downloads complete - logs: $LOG_DIR/download.log"
+    log "info" "Downloads complete - logs: $(realpath "$LOG_DIR")/download.log"
 }
 
 run_llvm_fix() {
@@ -149,7 +149,7 @@ build() {
     fi
 
     log "info" "Building OpenWrt${MODE:+ ($MODE mode)}"
-    $build_cmd 2>&1 | tee "$log_file" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Build failed - see $log_file"; exit 1; }
+    $build_cmd 2>&1 | tee "$log_file" | "$LOG_FILTER" $LOG_ARGS || { log "error" "Build failed - see $(realpath "$log_file")"; exit 1; }
     echo -e "${GREEN}"
     cat << 'EOF'
      ____  _   _  ____ ____ _____ ____ ____  _
@@ -158,7 +158,7 @@ build() {
      ___) | |_| | |__| |___| |___ ___) |__) |_|
     |____/ \___/ \____\____|_____|____/____/(_)
 EOF
-    log "info" "Build complete - Log files can be found in: $LOG_DIR"
+    log "info" "Build complete - Log files can be found in: $(realpath "$LOG_DIR")"
 
     ccache -s  # Should show hits/misses
 }
@@ -191,4 +191,4 @@ case "$MODE" in
     update) self_update ;;
 esac
 
-log "info" "Build completed (${MODE^^}) - logs: $LOG_DIR"
+log "info" "Build completed (${MODE^^}) - logs: $(realpath "$LOG_DIR")"
