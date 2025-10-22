@@ -83,7 +83,7 @@ check_staging_symlinks() {
     if [ -n "$broken_links" ]; then
         log "ERROR" "Broken symlinks detected:"
         echo "$broken_links" | while read -r link; do
-            log "ERROR" "Broken symlink: $link"
+            log "ERROR" "Broken symlink: ./staging_dir/host/bin/$link"
         done
         return 1
     else
