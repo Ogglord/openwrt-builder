@@ -24,7 +24,7 @@ deb http://archive.ubuntu.com/ubuntu noble-backports main restricted universe mu
 deb http://security.ubuntu.com/ubuntu noble-security main restricted universe multiverse
 EOF
 rm -rf /etc/apt/sources.list.d/ubuntu.sources
-apt-get update -y -qq 
+apt-get update -y -qq
 grep -v '^#' ./openwrt-builder.packages | xargs apt-get install -y -qq
 touch /.packages_installed
 
@@ -59,11 +59,11 @@ export DBX_VERBOSE="1"
 EOF
 
 # Install just
-curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/bin
+#curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/bin
 
 # Configure system settings to allow short password
 sed -i 's/obscure yescrypt/minlen=2 nullok/' /etc/pam.d/common-password
 
 # Cleanup
 apt-get clean > /dev/null
-rm -rf /var/lib/apt/lists/* 
+rm -rf /var/lib/apt/lists/*
